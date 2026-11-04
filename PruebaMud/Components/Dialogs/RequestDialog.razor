@@ -1,0 +1,152 @@
+@using PruebaMud.Models
+@using PruebaMud.Services
+@inject ClienteService ClienteService
+
+<MudDialog>
+    <DialogContent>
+        @if (!clientes.Any() && !cargandoClientes)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                No hay clientes. Crea al menos uno en la sección Clientes.
+            </MudAlert>
+        }
+
+        <MudForm @ref="form" @bind-IsValid="valido">
+            <MudSelect T="int" @bind-Value="request.ClienteId"
+                       Label="Cliente"
+                       Required="true"
+                       RequiredError="Selecciona un cliente"
+                       Validation="@(new Func<int, string?>(v => v > 0 ? null : "Selecciona un cliente"))">
+                @foreach (var c in clientes)
+                {
+                    <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudDatePicker Label="Fecha de solicitud"
+                           @bind-Date="fechaSolicitud"
+                           DateFormat="dd/MM/yyyy"
+                           Required="true"
+                           RequiredError="La fecha es obligatoria" />
+
+            <MudTextField @bind-Value="request.Descripcion"
+                          Label="Descripción"
+                          Lines="3"
+                          MaxLength="500"
+                          Required="true"
+                          RequiredError="La descripción es obligatoria" />
+
+            @if (RequestEditar is not null)
+            {
+                <MudSelect T="EstadoRequest" @bind-Value="request.Estado" Label="Estado">
+                    @foreach (var estado in Enum.GetValues<EstadoRequest>())
+                    {
+                        <MudSelectItem T="EstadoRequest" Value="estado">@estado.Texto()</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+
+            <MudText Typo="Typo.subtitle2" Class="mt-4 mb-1">Fármacos solicitados</MudText>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="5">
+                    <MudCheckBox T="bool" @bind-Value="request.MPA" Label="MPA" />
+                </MudItem>
+                <MudItem xs="7">
+                    <MudNumericField @bind-Value="request.DosisMPA" Label="Dosis MPA" Min="0"
+                                     Disabled="@(!request.MPA)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request.MPA, v)))" />
+                </MudItem>
+
+                <MudItem xs="5">
+                    <MudCheckBox T="bool" @bind-Value="request.MTP" Label="MTP" />
+                </MudItem>
+                <MudItem xs="7">
+                    <MudNumericField @bind-Value="request.DosisMTP" Label="Dosis MTP" Min="0"
+                                     Disabled="@(!request.MTP)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request.MTP, v)))" />
+                </MudItem>
+
+                <MudItem xs="5">
+                    <MudCheckBox T="bool" @bind-Value="request.EVE" Label="EVE" />
+                </MudItem>
+                <MudItem xs="7">
+                    <MudNumericField @bind-Value="request.DosisEVE" Label="Dosis EVE" Min="0"
+                                     Disabled="@(!request.EVE)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request.EVE, v)))" />
+                </MudItem>
+
+                <MudItem xs="5">
+                    <MudCheckBox T="bool" @bind-Value="request.TAC" Label="TAC" />
+                </MudItem>
+                <MudItem xs="7">
+                    <MudNumericField @bind-Value="request.DosisTAC" Label="Dosis TAC" Min="0"
+                                     Disabled="@(!request.TAC)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request.TAC, v)))" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Guardar">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // Si se pasa una solicitud, el diálogo funciona en modo edición; si no, en modo creación
+    [Parameter] public Request? RequestEditar { get; set; }
+
+    private MudForm form = default!;
+    private bool valido;
+    private bool cargandoClientes = true;
+    private Request request = new();
+    private DateTime? fechaSolicitud = DateTime.Today;
+    private List<Cliente> clientes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await ClienteService.ObtenerAsync();
+        cargandoClientes = false;
+
+        if (RequestEditar is not null)
+        {
+            // Se trabaja sobre una copia para no modificar la fila de la tabla si se cancela
+            request = new Request
+            {
+                Id = RequestEditar.Id,
+                ClienteId = RequestEditar.ClienteId,
+                FechaSolicitud = RequestEditar.FechaSolicitud,
+                FechaCreacion = RequestEditar.FechaCreacion,
+                Estado = RequestEditar.Estado,
+                Descripcion = RequestEditar.Descripcion,
+                MPA = RequestEditar.MPA,
+                MTP = RequestEditar.MTP,
+                EVE = RequestEditar.EVE,
+                TAC = RequestEditar.TAC,
+                DosisMPA = RequestEditar.DosisMPA,
+                DosisMTP = RequestEditar.DosisMTP,
+                DosisEVE = RequestEditar.DosisEVE,
+                DosisTAC = RequestEditar.DosisTAC
+            };
+            fechaSolicitud = RequestEditar.FechaSolicitud;
+        }
+    }
+
+    // Si el fármaco está marcado, la dosis debe ser mayor que 0
+    private static string? ValidaDosis(bool requerido, int dosis) =>
+        !requerido || dosis > 0 ? null : "Indica la dosis";
+
+    private async Task Guardar()
+    {
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        request.FechaSolicitud = fechaSolicitud!.Value.Date;
+        MudDialog.Close(DialogResult.Ok(request));
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

@@ -1,0 +1,89 @@
+@using PruebaMud.Models
+@using PruebaMud.Services
+@inject ClienteService ClienteService
+
+<MudDialog>
+    <DialogContent>
+        @if (!clientes.Any() && !cargandoClientes)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                No hay clientes. Crea al menos uno en la sección Clientes.
+            </MudAlert>
+        }
+
+        <MudForm @ref="form" @bind-IsValid="valido">
+            <MudSelect T="int" @bind-Value="pedido.ClienteId"
+                       Label="Cliente"
+                       Required="true"
+                       RequiredError="Selecciona un cliente"
+                       Validation="@(new Func<int, string?>(v => v > 0 ? null : "Selecciona un cliente"))">
+                @foreach (var c in clientes)
+                {
+                    <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudNumericField @bind-Value="pedido.Importe"
+                             Label="Importe"
+                             Required="true"
+                             Validation="@(new Func<decimal, string?>(v => v > 0 ? null : "El importe debe ser mayor que 0"))" />
+
+            @* El estado solo se elige al editar; los pedidos nuevos siempre empiezan como "Nuevo" *@
+            @if (PedidoEditar is not null)
+            {
+                <MudSelect T="EstadoPedido" @bind-Value="pedido.Estado" Label="Estado">
+                    @foreach (var estado in Enum.GetValues<EstadoPedido>())
+                    {
+                        <MudSelectItem T="EstadoPedido" Value="estado">@estado.Texto()</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Guardar">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // Si se pasa un pedido, el diálogo funciona en modo edición; si no, en modo creación
+    [Parameter] public Pedido? PedidoEditar { get; set; }
+
+    private MudForm form = default!;
+    private bool valido;
+    private bool cargandoClientes = true;
+    private Pedido pedido = new();
+    private List<Cliente> clientes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await ClienteService.ObtenerAsync();
+        cargandoClientes = false;
+
+        if (PedidoEditar is not null)
+        {
+            // Se trabaja sobre una copia para no modificar la fila de la tabla si se cancela
+            pedido = new Pedido
+            {
+                Id = PedidoEditar.Id,
+                ClienteId = PedidoEditar.ClienteId,
+                Importe = PedidoEditar.Importe,
+                FechaCreacion = PedidoEditar.FechaCreacion,
+                Estado = PedidoEditar.Estado
+            };
+        }
+    }
+
+    private async Task Guardar()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        MudDialog.Close(DialogResult.Ok(pedido));
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

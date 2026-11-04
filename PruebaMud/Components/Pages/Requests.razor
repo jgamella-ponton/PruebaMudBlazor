@@ -1,0 +1,204 @@
+@page "/requests"
+@using PruebaMud.Models
+@using PruebaMud.Services
+@using PruebaMud.Components.Dialogs
+@inject RequestService RequestService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Solicitudes</PageTitle>
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5">Solicitudes</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AbrirNuevaRequest">
+        Nueva solicitud
+    </MudButton>
+</MudStack>
+
+<MudStack Row="true" Spacing="3" Class="mb-4">
+    @* Al pulsar la X se borra el filtro y vuelven a verse todos los estados *@
+    <MudSelect T="EstadoRequest?" Value="filtroEstado" ValueChanged="CambiarFiltro"
+               Label="Filtrar por estado" Placeholder="Todos" Clearable="true">
+        @foreach (var estado in Enum.GetValues<EstadoRequest>())
+        {
+            <MudSelectItem T="EstadoRequest?" Value="@((EstadoRequest?)estado)">@estado.Texto()</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>
+
+<MudText Typo="Typo.caption" Class="mb-2">
+    @requests.Count @(requests.Count == 1 ? "solicitud" : "solicitudes")
+    @if (filtroEstado.HasValue)
+    {
+        <span> con estado «@filtroEstado.Value.Texto()»</span>
+    }
+</MudText>
+
+<MudTable @ref="tabla" Items="@requests" Hover="true" Striped="true" Dense="true" Loading="@cargando" RowsPerPage="10">
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Request, object>(x => x.Id)">Id</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Request, object>(x => x.Cliente != null ? x.Cliente.Nombre : string.Empty)">Cliente</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel InitialDirection="SortDirection.Descending"
+                               SortBy="new Func<Request, object>(x => x.FechaSolicitud)">Fecha solicitud</MudTableSortLabel>
+        </MudTh>
+        <MudTh>Descripción</MudTh>
+        <MudTh>Fármacos</MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Request, object>(x => x.Estado)">Estado</MudTableSortLabel>
+        </MudTh>
+        <MudTh>Detalles</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Cliente">@context.Cliente?.Nombre</MudTd>
+        <MudTd DataLabel="Fecha solicitud">@context.FechaSolicitud.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd DataLabel="Descripción">
+            <span title="@context.Descripcion">@Recortar(context.Descripcion, 50)</span>
+        </MudTd>
+        <MudTd DataLabel="Fármacos">
+            @if (context.MPA) { <MudChip T="string" Size="Size.Small">MPA: @context.DosisMPA</MudChip> }
+            @if (context.MTP) { <MudChip T="string" Size="Size.Small">MTP: @context.DosisMTP</MudChip> }
+            @if (context.EVE) { <MudChip T="string" Size="Size.Small">EVE: @context.DosisEVE</MudChip> }
+            @if (context.TAC) { <MudChip T="string" Size="Size.Small">TAC: @context.DosisTAC</MudChip> }
+        </MudTd>
+        <MudTd DataLabel="Estado">
+            <MudChip T="string" Size="Size.Small" Color="@ColorEstado(context.Estado)">
+                @context.Estado.Texto()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Detalles">
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       Color="Color.Primary"
+                       Href="@($"/requestdetails/{context.Id}")">
+                Detalles
+            </MudButton>
+        </MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           title="Editar"
+                           OnClick="@(() => EditarRequest(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Size="Size.Small"
+                           Color="Color.Error"
+                           title="Borrar"
+                           OnClick="@(() => BorrarRequest(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>@(filtroEstado.HasValue ? "No hay solicitudes con ese estado." : "No hay solicitudes todavía.")</MudText>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50 }"
+                       RowsPerPageString="Filas por página:"
+                       InfoFormat="{first_item}-{last_item} de {all_items}"
+                       AllItemsText="Todas" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<Request>? tabla;
+    private List<Request> requests = new();
+    private bool cargando = true;
+    private EstadoRequest? filtroEstado = null;   // null = todos
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarRequests();
+    }
+
+    private static Color ColorEstado(EstadoRequest estado) => estado switch
+    {
+        EstadoRequest.Nueva      => Color.Info,
+        EstadoRequest.EnProceso  => Color.Warning,
+        EstadoRequest.Completada => Color.Success,
+        _                        => Color.Default
+    };
+
+    private static string Recortar(string texto, int max) =>
+        texto.Length <= max ? texto : texto[..max] + "…";
+
+    private async Task CambiarFiltro(EstadoRequest? nuevoFiltro)
+    {
+        filtroEstado = nuevoFiltro;
+        await CargarRequests();
+
+        // Al cambiar el filtro se vuelve a la primera página
+       tabla?.NavigateTo(0);
+    }
+
+
+    private async Task CargarRequests()
+    {
+        cargando = true;
+        requests = await RequestService.ObtenerAsync(OrdenRequests.FechaCreacionDesc, filtroEstado);
+        cargando = false;
+    }
+
+    private async Task AbrirNuevaRequest()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<RequestDialog>("Nueva solicitud", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Request nueva })
+        {
+            await RequestService.CrearAsync(nueva);
+            Snackbar.Add("Solicitud creada correctamente", Severity.Success);
+            await CargarRequests();
+        }
+    }
+
+    private async Task EditarRequest(Request request)
+    {
+        var parameters = new DialogParameters<RequestDialog>
+        {
+            { x => x.RequestEditar, request }
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<RequestDialog>($"Editar solicitud #{request.Id}", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Request editada })
+        {
+            var ok = await RequestService.ActualizarAsync(editada);
+
+            if (ok)
+                Snackbar.Add("Solicitud actualizada correctamente", Severity.Success);
+            else
+                Snackbar.Add("La solicitud ya no existe", Severity.Warning);
+
+            await CargarRequests();
+        }
+    }
+
+    private async Task BorrarRequest(Request request)
+    {
+        var confirmado = await DialogService.ShowMessageBoxAsync(
+            "Confirmar borrado",
+            $"¿Seguro que quieres borrar la solicitud #{request.Id} de {request.Cliente?.Nombre}? Esta acción no se puede deshacer.",
+            yesText: "Borrar",
+            cancelText: "Cancelar");
+
+        if (confirmado != true) return;
+
+        var ok = await RequestService.BorrarAsync(request.Id);
+
+        if (ok)
+            Snackbar.Add("Solicitud borrada", Severity.Success);
+        else
+            Snackbar.Add("La solicitud ya no existe", Severity.Warning);
+
+        await CargarRequests();
+    }
+}

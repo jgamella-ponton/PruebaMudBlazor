@@ -1,0 +1,199 @@
+@page "/requestdetails/{Id:int}"
+@using PruebaMud.Models
+@using PruebaMud.Services
+@inject RequestService RequestService
+@inject ClienteService ClienteService
+@inject ISnackbar Snackbar
+
+<PageTitle>Detalle de solicitud</PageTitle>
+
+<MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Href="/requests" Class="mb-3">
+    Volver a solicitudes
+</MudButton>
+
+@if (cargando)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (request is null)
+{
+    <MudAlert Severity="Severity.Warning">No se encontró la solicitud #@Id.</MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h5">Solicitud #@request.Id</MudText>
+    <MudText Typo="Typo.caption" Class="mb-4">
+        Creada el @request.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+    </MudText>
+
+    <MudPaper Class="pa-4" Style="max-width: 800px;">
+        <MudForm @ref="form" @bind-IsValid="valido">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="int" @bind-Value="request.ClienteId"
+                               Label="Cliente"
+                               Required="true"
+                               RequiredError="Selecciona un cliente"
+                               Validation="@(new Func<int, string?>(v => v > 0 ? null : "Selecciona un cliente"))">
+                        @foreach (var c in clientes)
+                        {
+                            <MudSelectItem T="int" Value="c.Id">@c.Nombre</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Fecha de solicitud"
+                                   @bind-Date="fechaSolicitud"
+                                   DateFormat="dd/MM/yyyy"
+                                   Required="true"
+                                   RequiredError="La fecha es obligatoria" />
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudSelect T="EstadoRequest" @bind-Value="request.Estado" Label="Estado">
+                        @foreach (var estado in Enum.GetValues<EstadoRequest>())
+                        {
+                            <MudSelectItem T="EstadoRequest" Value="estado">@estado.Texto()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="request.Descripcion"
+                                  Label="Descripción"
+                                  Lines="4"
+                                  MaxLength="500"
+                                  Required="true"
+                                  RequiredError="La descripción es obligatoria" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2">Fármacos solicitados</MudText>
+                </MudItem>
+
+                <MudItem xs="6" md="3">
+                    <MudCheckBox T="bool" @bind-Value="request.MPA" Label="MPA" />
+                    <MudNumericField @bind-Value="request.DosisMPA" Label="Dosis MPA" Min="0"
+                                     Disabled="@(!request.MPA)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MPA, v)))" />
+                </MudItem>
+
+                <MudItem xs="6" md="3">
+                    <MudCheckBox T="bool" @bind-Value="request.MTP" Label="MTP" />
+                    <MudNumericField @bind-Value="request.DosisMTP" Label="Dosis MTP" Min="0"
+                                     Disabled="@(!request.MTP)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MTP, v)))" />
+                </MudItem>
+
+                <MudItem xs="6" md="3">
+                    <MudCheckBox T="bool" @bind-Value="request.EVE" Label="EVE" />
+                    <MudNumericField @bind-Value="request.DosisEVE" Label="Dosis EVE" Min="0"
+                                     Disabled="@(!request.EVE)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request!.EVE, v)))" />
+                </MudItem>
+
+                <MudItem xs="6" md="3">
+                    <MudCheckBox T="bool" @bind-Value="request.TAC" Label="TAC" />
+                    <MudNumericField @bind-Value="request.DosisTAC" Label="Dosis TAC" Min="0"
+                                     Disabled="@(!request.TAC)"
+                                     Validation="@(new Func<int, string?>(v => ValidaDosis(request!.TAC, v)))" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+            <MudButton OnClick="Descartar" Disabled="@guardando">Descartar cambios</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Guardar" Disabled="@guardando">
+                Guardar cambios
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Request? request;
+    private MudForm? form;
+    private bool valido;
+    private bool cargando = true;
+    private bool guardando;
+    private DateTime? fechaSolicitud;
+    private List<Cliente> clientes = new();
+
+    // Se ejecuta al abrir la página y también si cambia el Id de la ruta
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        clientes = await ClienteService.ObtenerAsync();
+        await CargarRequest();
+        cargando = false;
+    }
+
+    private async Task CargarRequest()
+    {
+        var original = await RequestService.ObtenerPorIdAsync(Id);
+
+        if (original is null)
+        {
+            request = null;
+            return;
+        }
+
+        // Se edita una copia para poder descartar los cambios sin tocar la base de datos
+        request = new Request
+        {
+            Id = original.Id,
+            ClienteId = original.ClienteId,
+            FechaSolicitud = original.FechaSolicitud,
+            FechaCreacion = original.FechaCreacion,
+            Estado = original.Estado,
+            Descripcion = original.Descripcion,
+            MPA = original.MPA,
+            MTP = original.MTP,
+            EVE = original.EVE,
+            TAC = original.TAC,
+            DosisMPA = original.DosisMPA,
+            DosisMTP = original.DosisMTP,
+            DosisEVE = original.DosisEVE,
+            DosisTAC = original.DosisTAC
+        };
+        fechaSolicitud = original.FechaSolicitud;
+    }
+
+    // Si el fármaco está marcado, la dosis debe ser mayor que 0
+    private static string? ValidaDosis(bool requerido, int dosis) =>
+        !requerido || dosis > 0 ? null : "Indica la dosis";
+
+    private async Task Guardar()
+    {
+        if (request is null || form is null) return;
+
+        await form.ValidateAsync();
+        if (!form.IsValid) return;
+
+        guardando = true;
+        request.FechaSolicitud = fechaSolicitud!.Value.Date;
+
+        var ok = await RequestService.ActualizarAsync(request);
+        guardando = false;
+
+        if (ok)
+        {
+            Snackbar.Add("Solicitud actualizada correctamente", Severity.Success);
+            await CargarRequest();   // recarga desde la base de datos lo que realmente se guardó
+        }
+        else
+        {
+            Snackbar.Add("La solicitud ya no existe", Severity.Warning);
+        }
+    }
+
+    private async Task Descartar()
+    {
+        await CargarRequest();
+        if (form is not null)
+            await form.ResetValidationAsync();
+    }
+}

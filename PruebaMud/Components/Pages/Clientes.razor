@@ -1,0 +1,144 @@
+@page "/clientes"
+@* @attribute [Authorize] *@
+@rendermode InteractiveServer
+@using PruebaMud.Models
+@using PruebaMud.Services
+@using PruebaMud.Components.Dialogs
+@inject ClienteService ClienteService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Clientes</PageTitle>
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5">Clientes</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AbrirNuevoCliente">
+        Nuevo cliente
+    </MudButton>
+</MudStack>
+
+<MudTable Items="@clientes" Hover="true" Striped="true" Dense="true" Loading="@cargando">
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel InitialDirection="SortDirection.Ascending"
+                               SortBy="new Func<Cliente, object>(x => x.Nombre)">Nombre</MudTableSortLabel>
+        </MudTh>
+        <MudTh>Email</MudTh>
+        <MudTh>Teléfono</MudTh>
+        <MudTh>Estado</MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nombre">@context.Nombre</MudTd>
+        <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Teléfono">@context.Telefono</MudTd>
+        @* <MudTd DataLabel="Estado">@context.Estado.ToString()</MudTd> *@
+        @* Mostrar el estado del cliente como un chip con color. *@
+        <MudTd DataLabel="Estado">
+            <MudChip T="string" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                @context.Estado.Texto()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           title="Editar"
+                           OnClick="@(() => EditarCliente(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Size="Size.Small"
+                           Color="Color.Error"
+                           title="Borrar"
+                           OnClick="@(() => BorrarCliente(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No hay clientes todavía.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<Cliente> clientes = new();
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarClientes();
+    }
+
+    private async Task CargarClientes()
+    {
+        cargando = true;
+        clientes = await ClienteService.ObtenerAsync();
+        cargando = false;
+    }
+
+    private async Task AbrirNuevoCliente()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<ClienteDialog>("Nuevo cliente", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Cliente nuevo })
+        {
+            await ClienteService.CrearAsync(nuevo);
+            Snackbar.Add("Cliente creado correctamente", Severity.Success);
+            await CargarClientes();
+        }
+    }
+
+    private async Task EditarCliente(Cliente cliente)
+    {
+        var parameters = new DialogParameters<ClienteDialog>
+        {
+            { x => x.ClienteEditar, cliente }
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<ClienteDialog>($"Editar cliente", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Cliente editado })
+        {
+            var ok = await ClienteService.ActualizarAsync(editado);
+
+            if (ok)
+                Snackbar.Add("Cliente actualizado correctamente", Severity.Success);
+            else
+                Snackbar.Add("El cliente ya no existe", Severity.Warning);
+
+            await CargarClientes();
+        }
+    }
+
+    private async Task BorrarCliente(Cliente cliente)
+    {
+        var confirmado = await DialogService.ShowMessageBoxAsync(
+            "Confirmar borrado",
+            $"¿Seguro que quieres borrar al cliente «{cliente.Nombre}»? Esta acción no se puede deshacer.",
+            yesText: "Borrar",
+            cancelText: "Cancelar");
+
+        if (confirmado != true) return;
+
+        var (ok, error) = await ClienteService.BorrarAsync(cliente.Id);
+
+        if (ok)
+            Snackbar.Add("Cliente borrado", Severity.Success);
+        else
+            Snackbar.Add(error ?? "No se pudo borrar el cliente", Severity.Warning);
+
+        await CargarClientes();
+    }
+
+    private Color ObtenerColorEstado(EstadoCliente estado)
+    {
+        return estado switch
+        {
+            EstadoCliente.Activo => Color.Success,
+            EstadoCliente.Inactivo => Color.Warning,
+            _ => Color.Default
+        };
+    }
+}

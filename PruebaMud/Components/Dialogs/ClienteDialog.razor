@@ -1,0 +1,85 @@
+@using PruebaMud.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="valido">
+            <MudTextField @bind-Value="cliente.Nombre"
+                          Label="Nombre"
+                          Required="true"
+                          RequiredError="El nombre es obligatorio"
+                          MaxLength="100" />
+
+            <MudTextField @bind-Value="cliente.Email"
+                          Label="Email"
+                          InputType="InputType.Email"
+                          MaxLength="150" />
+
+                <MudTextField @bind-Value="cliente.Telefono"
+                            Label="Teléfono"
+                            InputType="InputType.Telephone"
+                            MaxLength="30" />
+
+            @* El estado solo se elige al editar; los pedidos nuevos siempre empiezan como "Activo". *@
+            @if (ClienteEditar is not null)
+            {
+                <MudSelect T="EstadoCliente" @bind-Value="cliente.Estado" Label="Estado">
+                    @foreach (var estado in Enum.GetValues<EstadoCliente>())
+                    {
+                        <MudSelectItem T="EstadoCliente" Value="estado">@estado.Texto()</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            @* }
+            else
+            {
+                cliente.Estado = EstadoCliente.Activo;
+            }
+            <MudSelect @bind-Value="cliente.Estado"
+                       Label="Estado"
+                       Variant="Variant.Filled">
+                <MudSelectItem Value="@(EstadoCliente.Activo)" Text="@(EstadoCliente.Activo.Texto())" />
+                <MudSelectItem Value="@(EstadoCliente.Inactivo)" Text="@(EstadoCliente.Inactivo.Texto())" />
+            </MudSelect> *@
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Guardar">Guardar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    // Si se pasa un cliente, el diálogo funciona en modo edición; si no, en modo creación
+    [Parameter] public Cliente? ClienteEditar { get; set; }
+
+    private MudForm form = default!;
+    private bool valido;
+    private Cliente cliente = new();
+
+    protected override void OnInitialized()
+    {
+        if (ClienteEditar is not null)
+        {
+            cliente = new Cliente
+            {
+                Id = ClienteEditar.Id,
+                Nombre = ClienteEditar.Nombre,
+                Email = ClienteEditar.Email,
+                Telefono = ClienteEditar.Telefono,
+                Estado = ClienteEditar.Estado
+            };
+        }
+    }
+
+    private async Task Guardar()
+    {
+        await form.Validate();
+        if (!form.IsValid) return;
+
+        MudDialog.Close(DialogResult.Ok(cliente));
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

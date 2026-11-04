@@ -1,0 +1,84 @@
+@page "/pedidos2"
+@rendermode InteractiveServer
+@using PruebaMud.Models
+@using PruebaMud.Services
+@inject PedidoService PedidoService
+
+
+
+<PageTitle>Pedidos</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Pedidos</MudText>
+
+
+<MudMainContent>
+    <MudContainer MaxWidth="MaxWidth.Medium" Style="border: 1px solid #ccc; padding: 16px; border-radius: 8px;">
+<MudButton Variant="Variant.Filled">Default</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary">Primary</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Secondary">Secondary</MudButton>
+<MudButton Variant="Variant.Filled" Disabled="true">Disabled</MudButton>
+
+    
+     </MudContainer>
+</MudMainContent>
+
+
+<MudSelect T="OrdenPedidos" Value="orden" ValueChanged="CambiarOrden" Label="Ordenar por" Class="mb-4">
+    <MudSelectItem Value="OrdenPedidos.FechaDesc">Fecha (más recientes primero)</MudSelectItem>
+    <MudSelectItem Value="OrdenPedidos.FechaAsc">Fecha (más antiguos primero)</MudSelectItem>
+    <MudSelectItem Value="OrdenPedidos.ClienteAsc">Cliente (A-Z)</MudSelectItem>
+    <MudSelectItem Value="OrdenPedidos.ImporteDesc">Importe (mayor a menor)</MudSelectItem>
+</MudSelect>
+
+<MudTable Items="@pedidos" Hover="true" Striped="true" Dense="true" Loading="@cargando">
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Id)">Id</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Cliente)">Cliente</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Importe)">Importe</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.FechaCreacion)">Fecha creación</MudTableSortLabel>
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Cliente">@context.Cliente</MudTd>
+        <MudTd DataLabel="Importe">@context.Importe.ToString("C2")</MudTd>
+        <MudTd DataLabel="Fecha creación">@context.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No hay pedidos todavía.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+
+
+
+@code {
+    private List<Pedido> pedidos = new();
+    private bool cargando = true;
+    private OrdenPedidos orden = OrdenPedidos.FechaDesc;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPedidos();
+    }
+
+    private async Task CambiarOrden(OrdenPedidos nuevoOrden)
+    {
+        orden = nuevoOrden;
+        await CargarPedidos();
+    }
+
+    private async Task CargarPedidos()
+    {
+        cargando = true;
+        pedidos = await PedidoService.ObtenerAsync(orden);
+        cargando = false;
+    }
+}

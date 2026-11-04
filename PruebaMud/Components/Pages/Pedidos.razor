@@ -1,0 +1,188 @@
+@page "/pedidos"
+@rendermode InteractiveServer
+@using PruebaMud.Models
+@using PruebaMud.Services
+@using PruebaMud.Components.Dialogs
+@inject PedidoService PedidoService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Pedidos</PageTitle>
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5">Pedidos</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AbrirNuevoPedido">
+        Nuevo pedido
+    </MudButton>
+</MudStack>
+
+<MudStack Row="true" Spacing="3" Class="mb-4">
+    <MudSelect T="OrdenPedidos" Value="orden" ValueChanged="CambiarOrden" Label="Ordenar por">
+        <MudSelectItem Value="OrdenPedidos.FechaDesc">Fecha (más recientes primero)</MudSelectItem>
+        <MudSelectItem Value="OrdenPedidos.FechaAsc">Fecha (más antiguos primero)</MudSelectItem>
+        <MudSelectItem Value="OrdenPedidos.ClienteAsc">Cliente (A-Z)</MudSelectItem>
+        <MudSelectItem Value="OrdenPedidos.ImporteDesc">Importe (mayor a menor)</MudSelectItem>
+    </MudSelect>
+
+    @* Al pulsar la X se borra el filtro y vuelven a verse todos los estados *@
+    <MudSelect T="EstadoPedido?" Value="filtroEstado" ValueChanged="CambiarFiltro"
+               Label="Filtrar por estado" Placeholder="Todos" Clearable="true">
+        @foreach (var estado in Enum.GetValues<EstadoPedido>())
+        {
+            <MudSelectItem T="EstadoPedido?" Value="@((EstadoPedido?)estado)">@estado.Texto()</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>
+
+<MudText Typo="Typo.caption" Class="mb-2">
+    @pedidos.Count @(pedidos.Count == 1 ? "pedido" : "pedidos")
+    @if (filtroEstado.HasValue)
+    {
+        <span> con estado «@filtroEstado.Value.Texto()»</span>
+    }
+</MudText>
+
+<MudTable Items="@pedidos" Hover="true" Striped="true" Dense="true" Loading="@cargando">
+    <HeaderContent>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Id)">Id</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Cliente != null ? x.Cliente.Nombre : string.Empty)">Cliente</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Importe)">Importe</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.FechaCreacion)">Fecha creación</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortBy="new Func<Pedido, object>(x => x.Estado)">Estado</MudTableSortLabel>
+        </MudTh>
+        <MudTh>Acciones</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Cliente">@context.Cliente?.Nombre</MudTd>
+        <MudTd DataLabel="Importe">@context.Importe.ToString("C2")</MudTd>
+        <MudTd DataLabel="Fecha creación">@context.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</MudTd>
+        <MudTd DataLabel="Estado">
+            <MudChip T="string" Size="Size.Small" Color="@ColorEstado(context.Estado)">
+                @context.Estado.Texto()
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Acciones">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           title="Editar"
+                           OnClick="@(() => EditarPedido(context))" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Size="Size.Small"
+                           Color="Color.Error"
+                           title="Borrar"
+                           OnClick="@(() => BorrarPedido(context))" />
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>@(filtroEstado.HasValue ? "No hay pedidos con ese estado." : "No hay pedidos todavía.")</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<Pedido> pedidos = new();
+    private bool cargando = true;
+    private OrdenPedidos orden = OrdenPedidos.FechaDesc;
+    private EstadoPedido? filtroEstado = null;   // null = todos
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPedidos();
+    }
+
+    private static Color ColorEstado(EstadoPedido estado) => estado switch
+    {
+        EstadoPedido.Nuevo         => Color.Info,
+        EstadoPedido.EnPreparacion => Color.Warning,
+        EstadoPedido.Enviado       => Color.Success,
+        _                          => Color.Default
+    };
+
+    private async Task CambiarOrden(OrdenPedidos nuevoOrden)
+    {
+        orden = nuevoOrden;
+        await CargarPedidos();
+    }
+
+    private async Task CambiarFiltro(EstadoPedido? nuevoFiltro)
+    {
+        filtroEstado = nuevoFiltro;
+        await CargarPedidos();
+    }
+
+    private async Task CargarPedidos()
+    {
+        cargando = true;
+        pedidos = await PedidoService.ObtenerAsync(orden, filtroEstado);
+        cargando = false;
+    }
+
+    private async Task AbrirNuevoPedido()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<NuevoPedidoDialog>("Nuevo pedido", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Pedido nuevo })
+        {
+            await PedidoService.CrearAsync(nuevo);
+            Snackbar.Add("Pedido creado correctamente", Severity.Success);
+            await CargarPedidos();
+        }
+    }
+
+    private async Task EditarPedido(Pedido pedido)
+    {
+        var parameters = new DialogParameters<NuevoPedidoDialog>
+        {
+            { x => x.PedidoEditar, pedido }
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<NuevoPedidoDialog>($"Editar pedido #{pedido.Id}", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: Pedido editado })
+        {
+            var ok = await PedidoService.ActualizarAsync(editado);
+
+            if (ok)
+                Snackbar.Add("Pedido actualizado correctamente", Severity.Success);
+            else
+                Snackbar.Add("El pedido ya no existe", Severity.Warning);
+
+            await CargarPedidos();
+        }
+    }
+
+    private async Task BorrarPedido(Pedido pedido)
+    {
+        var confirmado = await DialogService.ShowMessageBoxAsync(
+            "Confirmar borrado",
+            $"¿Seguro que quieres borrar el pedido #{pedido.Id} de {pedido.Cliente?.Nombre}? Esta acción no se puede deshacer.",
+            yesText: "Borrar",
+            cancelText: "Cancelar");
+
+        if (confirmado != true) return;
+
+        var ok = await PedidoService.BorrarAsync(pedido.Id);
+
+        if (ok)
+            Snackbar.Add("Pedido borrado", Severity.Success);
+        else
+            Snackbar.Add("El pedido ya no existe", Severity.Warning);
+
+        await CargarPedidos();
+    }
+}
