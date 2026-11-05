@@ -1,0 +1,37 @@
+@page "/tabs"
+@using System.Globalization
+@using System.Text.Encodings.Web
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using PruebaMud.Models
+@inject ISnackbar Snackbar
+
+<PageTitle>Tabs</PageTitle>
+
+<MudTabs SortComparer="_customComparer" Elevation="2" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6">
+    <MudTabPanel Text="Tab 2 (Tag=C)" Tag="@( "C" )">
+        <MudText>Content Two</MudText>
+    </MudTabPanel>
+    <MudTabPanel Text="Tab 1 (Tag=B)" Tag="@( "B" )">
+        <MudText>Content One</MudText>
+        <MudButton Variant="Variant.Filled">Default</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary">Primary</MudButton>
+
+<MudButton Variant="Variant.Filled" Color="Color.Secondary">Secondary</MudButton>
+<MudButton Variant="Variant.Filled" Disabled="true">Disabled</MudButton>
+    </MudTabPanel>
+    <MudTabPanel Text="Tab 3 (Tag=A)" Tag="@( "A" )">
+        <MudText>Content Three</MudText>
+    </MudTabPanel>
+</MudTabs>
+@code {
+    private readonly IComparer<MudTabPanel> _customComparer = new CompareByTagAscending();
+
+    private class CompareByTagAscending : IComparer<MudTabPanel>
+    {
+        public int Compare(MudTabPanel x, MudTabPanel y)
+        {
+            return Comparer<string>.Default.Compare( x?.Tag as string, y?.Tag as string );
+        }
+    }
+}

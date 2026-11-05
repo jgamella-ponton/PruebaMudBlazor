@@ -1,0 +1,257 @@
+@page "/calc"
+@using System.Globalization
+@using System.Text.Encodings.Web
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using PruebaMud.Models
+@inject ISnackbar Snackbar
+
+<PageTitle>Calc</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Calc</MudText>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
+    <MudFileUpload @ref="upload" T="IBrowserFile" Accept=".json" FilesChanged="CargarArchivo">
+        <ActivatorContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
+                Cargar fichero JSON
+            </MudButton>
+        </ActivatorContent>
+    </MudFileUpload>
+
+    @if (nombreArchivo is not null)
+    {
+        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Description">@nombreArchivo</MudChip>
+        <MudButton Variant="Variant.Text" OnClick="Limpiar">Limpiar</MudButton>
+    }
+</MudStack>
+
+@if (cargando)
+{
+    <MudProgressLinear Indeterminate="true" Class="mb-4" />
+}
+
+@if (error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@error</MudAlert>
+}
+else if (datos is null && !cargando)
+{
+    <MudAlert Severity="Severity.Info">Carga un fichero JSON para ver su contenido.</MudAlert>
+}
+else if (datos is not null)
+{
+    <MudTabs Elevation="1" Rounded="true" PanelClass="pa-4">
+
+        <MudTabPanel Text="Vista estructurada">
+            @if (!TieneContenido(datos))
+            {
+                <MudAlert Severity="Severity.Warning" Class="mb-4">
+                    El fichero es un JSON válido, pero no contiene ninguna de las secciones esperadas.
+                    Revisa la pestaña «JSON completo».
+                </MudAlert>
+            }
+
+            <MudGrid>
+                @foreach (var seccion in Secciones(datos))
+                {
+                    <MudItem xs="12" md="6">
+                        <MudPaper Outlined="true" Class="pa-3 h-100">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">@seccion.Titulo</MudText>
+                            <MudSimpleTable Dense="true" Elevation="0">
+                                <tbody>
+                                    @foreach (var (etiqueta, valor) in seccion.Campos)
+                                    {
+                                        <tr>
+                                            <td style="font-weight:600; width:45%;">@etiqueta</td>
+                                            <td>@valor</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">
+                        Curvas (@datos.CurvesData.Count)
+                    </MudText>
+
+                    <MudTable Items="@datos.CurvesData" Dense="true" Striped="true" Hover="true" Elevation="1">
+                        <HeaderContent>
+                            <MudTh>Fármaco</MudTh>
+                            <MudTh>AUC</MudTh>
+                            <MudTh>IC25</MudTh>
+                            <MudTh>IC50</MudTh>
+                            <MudTh>IC75</MudTh>
+                            <MudTh>Inhib25</MudTh>
+                            <MudTh>Inhib50</MudTh>
+                            <MudTh>Inhib75</MudTh>
+                            <MudTh>Slope</MudTh>
+                            <MudTh>AsinInf</MudTh>
+                            <MudTh>AsinSup</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Fármaco"><b>@Fmt(context.ImsName)</b></MudTd>
+                            <MudTd DataLabel="AUC">@Fmt(context.AUC)</MudTd>
+                            <MudTd DataLabel="IC25">@Fmt(context.IC25)</MudTd>
+                            <MudTd DataLabel="IC50">@Fmt(context.IC50)</MudTd>
+                            <MudTd DataLabel="IC75">@Fmt(context.IC75)</MudTd>
+                            <MudTd DataLabel="Inhib25">@Fmt(context.Inhib25)</MudTd>
+                            <MudTd DataLabel="Inhib50">@Fmt(context.Inhib50)</MudTd>
+                            <MudTd DataLabel="Inhib75">@Fmt(context.Inhib75)</MudTd>
+                            <MudTd DataLabel="Slope">@Fmt(context.Slope)</MudTd>
+                            <MudTd DataLabel="AsinInf">@Fmt(context.AsinInf)</MudTd>
+                            <MudTd DataLabel="AsinSup">@Fmt(context.AsinSup)</MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText>El fichero no contiene curvas.</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="JSON completo">
+            <MudPaper Outlined="true" Class="pa-3" Style="overflow:auto; max-height:600px;">
+                <pre style="margin:0;">@jsonFormateado</pre>
+            </MudPaper>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    private const long TamanoMaximoBytes = 5 * 1024 * 1024;   // 5 MB
+
+    private static readonly JsonSerializerOptions OpcionesLectura = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private static readonly JsonSerializerOptions OpcionesEscritura = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping   // mantiene tildes y ñ legibles
+    };
+
+    private MudFileUpload<IBrowserFile>? upload;
+    private PatientAssaysFile? datos;
+    private string? jsonFormateado;
+    private string? nombreArchivo;
+    private string? error;
+    private bool cargando;
+
+    private async Task CargarArchivo(IBrowserFile? archivo)
+    {
+        if (archivo is null) return;
+
+        error = null;
+        datos = null;
+        jsonFormateado = null;
+        nombreArchivo = archivo.Name;
+        cargando = true;
+
+        try
+        {
+            if (!archivo.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "El fichero debe tener extensión .json.";
+                return;
+            }
+
+            // Se lee en memoria (máx. 5 MB) para poder interpretarlo de dos formas
+            using var flujo = archivo.OpenReadStream(TamanoMaximoBytes);
+            using var memoria = new MemoryStream();
+            await flujo.CopyToAsync(memoria);
+            var bytes = memoria.ToArray();
+
+            // 1) JSON completo con sangrías (también valida que sea un JSON correcto)
+            using var documento = JsonDocument.Parse(bytes);
+            jsonFormateado = JsonSerializer.Serialize(documento.RootElement, OpcionesEscritura);
+
+            // 2) Objeto tipado para la vista estructurada
+            datos = JsonSerializer.Deserialize<PatientAssaysFile>(bytes, OpcionesLectura);
+
+            Snackbar.Add("Fichero cargado correctamente", Severity.Success);
+        }
+        catch (JsonException ex)
+        {
+            error = $"El fichero no es un JSON válido o no tiene el formato esperado: {ex.Message}";
+        }
+        catch (IOException)
+        {
+            error = "No se pudo leer el fichero. Comprueba que no supere los 5 MB.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task Limpiar()
+    {
+        datos = null;
+        jsonFormateado = null;
+        nombreArchivo = null;
+        error = null;
+
+        // Permite volver a seleccionar el mismo fichero
+        if (upload is not null)
+            await upload.ClearAsync();
+    }
+
+    private static bool TieneContenido(PatientAssaysFile d) =>
+        d.RequesterData is not null || d.PatientData is not null || d.RequestData is not null ||
+        d.DatasetData is not null || d.AssayData is not null || d.CurvesData.Count > 0;
+
+    // Secciones de la vista estructurada: título + pares etiqueta/valor
+    private static List<(string Titulo, (string Etiqueta, string Valor)[] Campos)> Secciones(PatientAssaysFile d) => new()
+    {
+        ("Solicitante", new[]
+        {
+            ("ID del centro", Fmt(d.RequesterData?.CenterID)),
+            ("Centro", Fmt(d.RequesterData?.CenterName)),
+            ("Nombre", Fmt(d.RequesterData?.RequesterName)),
+            ("Apellidos", Fmt(d.RequesterData?.RequesterLastName))
+        }),
+        ("Paciente", new[]
+        {
+            ("ID interno", Fmt(d.PatientData?.InternalPatientID)),
+            ("ID externo", Fmt(d.PatientData?.ExternalPatientID))
+        }),
+        ("Solicitud", new[]
+        {
+            ("ID de solicitud", Fmt(d.RequestData?.ConnectRequestID)),
+            ("Código LIMS", Fmt(d.RequestData?.LIMSCode)),
+            ("Ratio", Fmt(d.RequestData?.Ratio)),
+            ("Ratio (dataset)", Fmt(d.DatasetData?.Ratio)),
+            ("Objetivo del test", Fmt(d.RequestData?.RequestTestObjective)),
+            ("Fecha de extracción", Fmt(d.RequestData?.RqDateExtraction)),
+            ("Fecha de creación", Fmt(d.RequestData?.RqCreatedOn)),
+            ("Comentarios", Fmt(d.RequestData?.RequesterDoctorComments))
+        }),
+        ("Ensayo", new[]
+        {
+            ("ID de placa", Fmt(d.AssayData?.ConnectPlateID)),
+            ("ID de ensayo", Fmt(d.AssayData?.AssayId)),
+            ("Código de placa", Fmt(d.AssayData?.PlateCode)),
+            ("Fecha de creación", Fmt(d.AssayData?.AssaysCreatedOn)),
+            ("MPA administrado", Fmt(d.AssayData?.MPA_Admin)),
+            ("MTP administrado", Fmt(d.AssayData?.MTP_Admin)),
+            ("EVE administrado", Fmt(d.AssayData?.EVE_Admin)),
+            ("TAC administrado", Fmt(d.AssayData?.TAC_Admin))
+        })
+    };
+
+    // Formatea cualquier valor para mostrarlo; "—" cuando no hay dato
+    private static string Fmt(object? valor) => valor switch
+    {
+        null                       => "—",
+        string s when string.IsNullOrWhiteSpace(s) => "—",
+        DateTime fecha             => fecha.ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.CurrentCulture),
+        double numero              => numero.ToString("0.####", CultureInfo.CurrentCulture),
+        _                          => valor.ToString() ?? "—"
+    };
+}

@@ -73,29 +73,31 @@ else
                 </MudItem>
 
                 <MudItem xs="6" md="3">
-                    <MudCheckBox T="bool" @bind-Value="request.MPA" Label="MPA" />
-                    <MudNumericField @bind-Value="request.DosisMPA" Label="Dosis MPA" Min="0"
+
+                    @* // utiliza un MudSwitch para mostrar un interruptor en lugar de un checkbox *@
+                    <MudSwitch T="bool" @bind-Value="request.MPA" Label="MPA"  Color="Color.Primary" />
+                    <MudNumericField @bind-Value="request.DosisMPA" Label="Dosis MPA" Min="0" Max="100"
                                      Disabled="@(!request.MPA)"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MPA, v)))" />
                 </MudItem>
 
                 <MudItem xs="6" md="3">
-                    <MudCheckBox T="bool" @bind-Value="request.MTP" Label="MTP" />
-                    <MudNumericField @bind-Value="request.DosisMTP" Label="Dosis MTP" Min="0"
+                    <MudSwitch T="bool" @bind-Value="request.MTP" Label="MTP"  Color="Color.Primary" />
+                    <MudNumericField @bind-Value="request.DosisMTP" Label="Dosis MTP" Min="0" Max="100"
                                      Disabled="@(!request.MTP)"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MTP, v)))" />
                 </MudItem>
 
                 <MudItem xs="6" md="3">
-                    <MudCheckBox T="bool" @bind-Value="request.EVE" Label="EVE" />
-                    <MudNumericField @bind-Value="request.DosisEVE" Label="Dosis EVE" Min="0"
+                    <MudSwitch T="bool" @bind-Value="request.EVE" Label="EVE"  Color="Color.Primary" />
+                    <MudNumericField @bind-Value="request.DosisEVE" Label="Dosis EVE" Min="0" Max="100"
                                      Disabled="@(!request.EVE)"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.EVE, v)))" />
                 </MudItem>
 
                 <MudItem xs="6" md="3">
-                    <MudCheckBox T="bool" @bind-Value="request.TAC" Label="TAC" />
-                    <MudNumericField @bind-Value="request.DosisTAC" Label="Dosis TAC" Min="0"
+                    <MudSwitch T="bool" @bind-Value="request.TAC" Label="TAC"  Color="Color.Primary" />
+                    <MudNumericField @bind-Value="request.DosisTAC" Label="Dosis TAC" Min="0" Max="100"
                                      Disabled="@(!request.TAC)"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.TAC, v)))" />
                 </MudItem>
@@ -113,7 +115,7 @@ else
 
 @code {
     [Parameter] public int Id { get; set; }
-
+   
     private Request? request;
     private MudForm? form;
     private bool valido;

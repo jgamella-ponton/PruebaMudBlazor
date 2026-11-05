@@ -195,6 +195,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xEaWFsb2dzXFJlcXVlc3REaWFsb2cucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/Calc.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDYWxjLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/Clientes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDbGllbnRlcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -225,6 +229,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/Requests.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZXF1ZXN0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/Tabs.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUYWJzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/Weather.razor]
