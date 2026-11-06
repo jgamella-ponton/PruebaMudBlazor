@@ -46,7 +46,13 @@ builder.Services.AddScoped(sp =>
 
 // Agregado para la autenticación
 
+// Agregado para la llamada a N8N
 
+builder.Services.AddHttpClient<N8nService>();
+builder.Services.AddScoped<ResultStore>();
+builder.Services.AddHttpClient<N8nService>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped<CalcState>();
+// Agregado para la llamada a N8N
 
 
 var app = builder.Build();

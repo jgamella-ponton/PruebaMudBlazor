@@ -1,0 +1,225 @@
+@page "/calcresult"
+@using System.Globalization
+@using System.Text.Encodings.Web
+@using System.Text.Json
+@using PruebaMud.Services
+@inject CalcState State
+
+<PageTitle>Resultado del cálculo</PageTitle>
+
+<MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Href="/calc" Class="mb-3">
+    Volver a Calc
+</MudButton>
+
+@if (errorLectura is not null)
+{
+    <MudAlert Severity="Severity.Error">@errorLectura</MudAlert>
+}
+else if (State.RespuestaJson is null)
+{
+    <MudAlert Severity="Severity.Info">
+        No hay ningún resultado todavía. Carga un fichero JSON en Calc y envíalo a n8n.
+    </MudAlert>
+}
+else
+{
+    <MudText Typo="Typo.h5">Resultado del cálculo</MudText>
+    <MudText Typo="Typo.caption" Class="mb-4">
+        Recibido el @State.RespuestaFecha?.ToString("dd/MM/yyyy HH:mm:ss")
+        @if (State.NombreArchivo is not null)
+        {
+            <span> · Fichero: @State.NombreArchivo</span>
+        }
+    </MudText>
+
+    @if (estadoError is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">n8n devolvió un error: @estadoError</MudAlert>
+    }
+
+    <MudTabs Elevation="1" Rounded="true" TabPanelsClass="pa-4">
+
+        <MudTabPanel Text="Resultado">
+            @if (resumen.Count == 0 && tablas.Count == 0 && bloques.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info">La respuesta no contiene datos que mostrar.</MudAlert>
+            }
+
+            @if (resumen.Count > 0)
+            {
+                <MudPaper Outlined="true" Class="pa-3 mb-4">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Resumen</MudText>
+                    <MudSimpleTable Dense="true" Elevation="0">
+                        <tbody>
+                            @foreach (var (clave, valor) in resumen)
+                            {
+                                <tr>
+                                    <td style="font-weight:600; width:30%;">@clave</td>
+                                    <td>@valor</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            }
+
+            @foreach (var tabla in tablas)
+            {
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@tabla.Titulo (@tabla.Filas.Count)</MudText>
+                <MudSimpleTable Dense="true" Striped="true" Hover="true" Class="mb-4" Style="overflow-x:auto;">
+                    <thead>
+                        <tr>
+                            @foreach (var columna in tabla.Columnas)
+                            {
+                                <th>@columna</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fila in tabla.Filas)
+                        {
+                            <tr>
+                                @foreach (var celda in fila)
+                                {
+                                    <td>@celda</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+            @foreach (var (clave, json) in bloques)
+            {
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@clave</MudText>
+                <MudPaper Outlined="true" Class="pa-3 mb-4" Style="overflow:auto; max-height:300px;">
+                    <pre style="margin:0;">@json</pre>
+                </MudPaper>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="JSON completo">
+            <MudPaper Outlined="true" Class="pa-3" Style="overflow:auto; max-height:600px;">
+                <pre style="margin:0;">@jsonFormateado</pre>
+            </MudPaper>
+        </MudTabPanel>
+
+    </MudTabs>
+}
+
+@code {
+    private static readonly JsonSerializerOptions OpcionesEscritura = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private record TablaDinamica(string Titulo, List<string> Columnas, List<List<string>> Filas);
+
+    private readonly List<(string Clave, string Valor)> resumen = new();
+    private readonly List<TablaDinamica> tablas = new();
+    private readonly List<(string Clave, string Json)> bloques = new();
+    private string? jsonFormateado;
+    private string? errorLectura;
+    private string? estadoError;
+
+    // La respuesta de n8n puede tener cualquier forma, así que se interpreta de forma genérica:
+    //  - valores simples (texto, números...)      -> tabla "Resumen"
+    //  - listas de objetos                         -> una tabla con una columna por clave
+    //  - objetos anidados / listas de valores      -> bloque de JSON con sangrías
+    protected override void OnInitialized()
+    {
+        var json = State.RespuestaJson;
+        if (json is null) return;
+
+        try
+        {
+            using var documento = JsonDocument.Parse(json);
+            var raiz = documento.RootElement;
+            jsonFormateado = JsonSerializer.Serialize(raiz, OpcionesEscritura);
+
+            switch (raiz.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    foreach (var propiedad in raiz.EnumerateObject())
+                        ProcesarPropiedad(propiedad.Name, propiedad.Value);
+
+                    // Convención: si n8n devuelve "status": "error", se destaca con un aviso
+                    if (raiz.TryGetProperty("status", out var estado) &&
+                        estado.ValueKind == JsonValueKind.String &&
+                        string.Equals(estado.GetString(), "error", StringComparison.OrdinalIgnoreCase))
+                    {
+                        estadoError = raiz.TryGetProperty("message", out var mensaje)
+                            ? Texto(mensaje)
+                            : "sin detalle.";
+                    }
+                    break;
+
+                case JsonValueKind.Array:
+                    ProcesarPropiedad("Resultados", raiz);
+                    break;
+
+                default:
+                    resumen.Add(("Respuesta", Texto(raiz)));
+                    break;
+            }
+        }
+        catch (JsonException ex)
+        {
+            errorLectura = $"No se pudo interpretar la respuesta de n8n: {ex.Message}";
+        }
+    }
+
+    private void ProcesarPropiedad(string nombre, JsonElement valor)
+    {
+        switch (valor.ValueKind)
+        {
+            case JsonValueKind.Array when valor.GetArrayLength() > 0 &&
+                                          valor.EnumerateArray().All(e => e.ValueKind == JsonValueKind.Object):
+                tablas.Add(CrearTabla(nombre, valor));
+                break;
+
+            case JsonValueKind.Object:
+            case JsonValueKind.Array:
+                bloques.Add((nombre, JsonSerializer.Serialize(valor, OpcionesEscritura)));
+                break;
+
+            default:
+                resumen.Add((nombre, Texto(valor)));
+                break;
+        }
+    }
+
+    private static TablaDinamica CrearTabla(string titulo, JsonElement lista)
+    {
+        // Columnas: todas las claves que aparecen, en orden de primera aparición
+        var columnas = new List<string>();
+        foreach (var elemento in lista.EnumerateArray())
+            foreach (var propiedad in elemento.EnumerateObject())
+                if (!columnas.Contains(propiedad.Name))
+                    columnas.Add(propiedad.Name);
+
+        var filas = new List<List<string>>();
+        foreach (var elemento in lista.EnumerateArray())
+        {
+            var celdas = new List<string>();
+            foreach (var columna in columnas)
+                celdas.Add(elemento.TryGetProperty(columna, out var valor) ? Texto(valor) : "—");
+            filas.Add(celdas);
+        }
+
+        return new TablaDinamica(titulo, columnas, filas);
+    }
+
+    private static string Texto(JsonElement v) => v.ValueKind switch
+    {
+        JsonValueKind.String => string.IsNullOrWhiteSpace(v.GetString()) ? "—" : v.GetString()!,
+        JsonValueKind.Number => v.TryGetInt64(out var entero)
+                                    ? entero.ToString(CultureInfo.CurrentCulture)
+                                    : v.GetDouble().ToString("0.####", CultureInfo.CurrentCulture),
+        JsonValueKind.True   => "Sí",
+        JsonValueKind.False  => "No",
+        JsonValueKind.Null or JsonValueKind.Undefined => "—",
+        _                    => v.GetRawText()
+    };
+}

@@ -9,7 +9,6 @@ public class PatientAssaysFile
     public RequesterData? RequesterData { get; set; }
     public PatientData? PatientData { get; set; }
     public RequestData? RequestData { get; set; }
-    public DatasetData? DatasetData { get; set; }
     public AssayData? AssayData { get; set; }
     public List<CurveData> CurvesData { get; set; } = new();
 }
@@ -37,11 +36,6 @@ public class RequestData
     public DateTime? RqDateExtraction { get; set; }
     public DateTime? RqCreatedOn { get; set; }
     public string? RequesterDoctorComments { get; set; }
-}
-
-public class DatasetData
-{
-    public double? Ratio { get; set; }
 }
 
 public class AssayData

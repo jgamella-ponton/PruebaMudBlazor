@@ -72,36 +72,33 @@ else
                     <MudText Typo="Typo.subtitle2">Fármacos solicitados</MudText>
                 </MudItem>
 
-                <MudItem xs="6" md="3">
 
-                    @* // utiliza un MudSwitch para mostrar un interruptor en lugar de un checkbox *@
-                    <MudSwitch T="bool" @bind-Value="request.MPA" Label="MPA"  Color="Color.Primary" />
+                @* Los fármacos no se pueden modificar cuando la solicitud está completada. *@
+                <MudItem xs="6" md="3">
+                    <MudSwitch T="bool" @bind-Value="request.MPA" Label="MPA"  Color="Color.Primary" Disabled="@DeshabilitarFarmacos()" />
                     <MudNumericField @bind-Value="request.DosisMPA" Label="Dosis MPA" Min="0" Max="100"
-                                     Disabled="@(!request.MPA)"
+                                     Disabled="@(!request.MPA || DeshabilitarFarmacos())"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MPA, v)))" />
                 </MudItem>
-
                 <MudItem xs="6" md="3">
-                    <MudSwitch T="bool" @bind-Value="request.MTP" Label="MTP"  Color="Color.Primary" />
+                    <MudSwitch T="bool" @bind-Value="request.MTP" Label="MTP"  Color="Color.Primary" Disabled="@DeshabilitarFarmacos()" />
                     <MudNumericField @bind-Value="request.DosisMTP" Label="Dosis MTP" Min="0" Max="100"
-                                     Disabled="@(!request.MTP)"
+                                     Disabled="@(!request.MTP || DeshabilitarFarmacos())"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.MTP, v)))" />
                 </MudItem>
-
                 <MudItem xs="6" md="3">
-                    <MudSwitch T="bool" @bind-Value="request.EVE" Label="EVE"  Color="Color.Primary" />
+                    <MudSwitch T="bool" @bind-Value="request.EVE" Label="EVE"  Color="Color.Primary" Disabled="@DeshabilitarFarmacos()" />
                     <MudNumericField @bind-Value="request.DosisEVE" Label="Dosis EVE" Min="0" Max="100"
-                                     Disabled="@(!request.EVE)"
+                                     Disabled="@(!request.EVE || DeshabilitarFarmacos())"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.EVE, v)))" />
                 </MudItem>
-
                 <MudItem xs="6" md="3">
-                    <MudSwitch T="bool" @bind-Value="request.TAC" Label="TAC"  Color="Color.Primary" />
+                    <MudSwitch T="bool" @bind-Value="request.TAC" Label="TAC"  Color="Color.Primary" Disabled="@DeshabilitarFarmacos()" />
                     <MudNumericField @bind-Value="request.DosisTAC" Label="Dosis TAC" Min="0" Max="100"
-                                     Disabled="@(!request.TAC)"
+                                     Disabled="@(!request.TAC || DeshabilitarFarmacos())"
                                      Validation="@(new Func<int, string?>(v => ValidaDosis(request!.TAC, v)))" />
                 </MudItem>
-            </MudGrid>
+            </MudGrid>      
         </MudForm>
 
         <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
@@ -198,4 +195,8 @@ else
         if (form is not null)
             await form.ResetValidationAsync();
     }
+
+// Crea una funcion si el estado de la request es Completada, que deshabilite los MudSwitch y MudNumericField de los farmacos, para que no se puedan modificar
+    private bool DeshabilitarFarmacos() => request?.Estado == EstadoRequest.Completada; 
+    
 }

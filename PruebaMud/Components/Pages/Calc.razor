@@ -4,29 +4,46 @@
 @using System.Text.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using PruebaMud.Models
+@using PruebaMud.Services
 @inject ISnackbar Snackbar
+@inject CalcState State
+@inject N8nService N8nService
+@inject NavigationManager Navigation
+@inject ResultStore ResultStore
 
 <PageTitle>Calc</PageTitle>
 
 <MudText Typo="Typo.h5" Class="mb-4">Calc</MudText>
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
+<MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="3" Class="mb-4">
     <MudFileUpload @ref="upload" T="IBrowserFile" Accept=".json" FilesChanged="CargarArchivo">
-        <ActivatorContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">
+        <CustomContent Context="fileUpload">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile"
+                       OnClick="fileUpload.OpenFilePickerAsync">
                 Cargar fichero JSON
             </MudButton>
-        </ActivatorContent>
+        </CustomContent>
     </MudFileUpload>
+
+    @if (datos is not null)
+    {
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.Send"
+                   Disabled="@(enviando || datos.CurvesData.Count == 0)"
+                   OnClick="EnviarAN8n">
+            @(enviando ? "Enviando…" : "Enviar a n8n")
+        </MudButton>
+    }
 
     @if (nombreArchivo is not null)
     {
         <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Description">@nombreArchivo</MudChip>
-        <MudButton Variant="Variant.Text" OnClick="Limpiar">Limpiar</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="Limpiar" Disabled="@enviando">Limpiar</MudButton>
     }
 </MudStack>
 
-@if (cargando)
+@if (cargando || enviando)
 {
     <MudProgressLinear Indeterminate="true" Class="mb-4" />
 }
@@ -35,13 +52,28 @@
 {
     <MudAlert Severity="Severity.Error" Class="mb-4">@error</MudAlert>
 }
-else if (datos is null && !cargando)
+
+@if (errorEnvio is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">
+        No se pudo completar el envío a n8n. @errorEnvio
+    </MudAlert>
+}
+
+@if (error is null && datos is null && !cargando)
 {
     <MudAlert Severity="Severity.Info">Carga un fichero JSON para ver su contenido.</MudAlert>
 }
 else if (datos is not null)
 {
-    <MudTabs Elevation="1" Rounded="true" PanelClass="pa-4">
+    @if (datos.CurvesData.Count == 0)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">
+            El fichero no contiene curvas, así que no se puede enviar a n8n.
+        </MudAlert>
+    }
+
+    <MudTabs Elevation="1" Rounded="true" TabPanelsClass="pa-4">
 
         <MudTabPanel Text="Vista estructurada">
             @if (!TieneContenido(datos))
@@ -93,7 +125,9 @@ else if (datos is not null)
                             <MudTh>AsinSup</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Fármaco"><b>@Fmt(context.ImsName)</b></MudTd>
+                            @* // Como cambio el color de la celda segun el valor del IMSName, uso <MudTd> en lugar de <td> para poder usar el parámetro DataLabel *@
+                            
+                            <MudTd DataLabel="Fármaco" Style=@($"background-color: {ColorCeldaIMS(context.ImsName)};")><b>@Fmt(context.ImsName)</b></MudTd>
                             <MudTd DataLabel="AUC">@Fmt(context.AUC)</MudTd>
                             <MudTd DataLabel="IC25">@Fmt(context.IC25)</MudTd>
                             <MudTd DataLabel="IC50">@Fmt(context.IC50)</MudTd>
@@ -141,16 +175,28 @@ else if (datos is not null)
     private string? jsonFormateado;
     private string? nombreArchivo;
     private string? error;
+    private string? errorEnvio;
     private bool cargando;
+    private bool enviando;
+
+    // Si el usuario vuelve desde /calcresult, se recupera el fichero que ya había cargado
+    protected override void OnInitialized()
+    {
+        datos = State.Datos;
+        jsonFormateado = State.JsonFormateado;
+        nombreArchivo = State.NombreArchivo;
+    }
 
     private async Task CargarArchivo(IBrowserFile? archivo)
     {
         if (archivo is null) return;
 
         error = null;
+        errorEnvio = null;
         datos = null;
         jsonFormateado = null;
         nombreArchivo = archivo.Name;
+        State.LimpiarTodo();
         cargando = true;
 
         try
@@ -174,6 +220,11 @@ else if (datos is not null)
             // 2) Objeto tipado para la vista estructurada
             datos = JsonSerializer.Deserialize<PatientAssaysFile>(bytes, OpcionesLectura);
 
+            // Se guarda en el estado compartido para conservarlo al cambiar de página
+            State.NombreArchivo = nombreArchivo;
+            State.Datos = datos;
+            State.JsonFormateado = jsonFormateado;
+
             Snackbar.Add("Fichero cargado correctamente", Severity.Success);
         }
         catch (JsonException ex)
@@ -190,12 +241,41 @@ else if (datos is not null)
         }
     }
 
+    private async Task EnviarAN8n()
+    {
+        if (datos is null) return;
+
+        errorEnvio = null;
+        enviando = true;
+
+        try
+        {
+            var (ok, mensajeError, json) = await N8nService.EnviarCurvasAsync(datos);
+
+            if (!ok)
+            {
+                errorEnvio = mensajeError;
+                return;
+            }
+
+            State.RespuestaJson = json;
+            State.RespuestaFecha = DateTime.Now;
+            Navigation.NavigateTo("/calcresult");
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
     private async Task Limpiar()
     {
         datos = null;
         jsonFormateado = null;
         nombreArchivo = null;
         error = null;
+        errorEnvio = null;
+        State.LimpiarTodo();
 
         // Permite volver a seleccionar el mismo fichero
         if (upload is not null)
@@ -204,7 +284,7 @@ else if (datos is not null)
 
     private static bool TieneContenido(PatientAssaysFile d) =>
         d.RequesterData is not null || d.PatientData is not null || d.RequestData is not null ||
-        d.DatasetData is not null || d.AssayData is not null || d.CurvesData.Count > 0;
+        d.AssayData is not null || d.CurvesData.Count > 0;
 
     // Secciones de la vista estructurada: título + pares etiqueta/valor
     private static List<(string Titulo, (string Etiqueta, string Valor)[] Campos)> Secciones(PatientAssaysFile d) => new()
@@ -226,7 +306,6 @@ else if (datos is not null)
             ("ID de solicitud", Fmt(d.RequestData?.ConnectRequestID)),
             ("Código LIMS", Fmt(d.RequestData?.LIMSCode)),
             ("Ratio", Fmt(d.RequestData?.Ratio)),
-            ("Ratio (dataset)", Fmt(d.DatasetData?.Ratio)),
             ("Objetivo del test", Fmt(d.RequestData?.RequestTestObjective)),
             ("Fecha de extracción", Fmt(d.RequestData?.RqDateExtraction)),
             ("Fecha de creación", Fmt(d.RequestData?.RqCreatedOn)),
@@ -254,4 +333,15 @@ else if (datos is not null)
         double numero              => numero.ToString("0.####", CultureInfo.CurrentCulture),
         _                          => valor.ToString() ?? "—"
     };
+
+    //Crea una funcion para el cambio el color de la celda segun el valor del IMSName, uso <MudTd> en lugar de <td> para poder usar el parámetro DataLabel
+    private string ColorCeldaIMS(string imsName) => imsName switch
+    {
+        "MPA" => "#d7dd17ff", // Amarillo
+        "MTP" => "#36db41ff", // Verde
+        "EVE" => "#CE91FE", // Morado
+        "TAC" => "#e96913ff", // Naranja
+        _     => "transparent" // Transparente para otros valores
+    };
+    
 }
