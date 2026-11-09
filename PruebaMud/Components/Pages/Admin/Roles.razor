@@ -1,0 +1,310 @@
+@page "/admin/roles"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+
+@attribute [Authorize]
+
+@inject RoleManager<IdentityRole> RoleManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Roles</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-6">
+
+    <MudPaper Class="pa-6" Elevation="2">
+
+        <MudStack Row="true"
+                  Justify="Justify.SpaceBetween"
+                  AlignItems="AlignItems.Center"
+                  Class="mb-5">
+
+            <div>
+                <MudText Typo="Typo.h4">
+                    Roles
+                </MudText>
+
+                <MudText Typo="Typo.body2"
+                         Color="Color.Secondary">
+                    Gestión de roles y permisos de la aplicación
+                </MudText>
+            </div>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateRole">
+                Nuevo rol
+            </MudButton>
+
+        </MudStack>
+
+
+        @if (_showCreateRole)
+        {
+            <MudPaper Class="pa-4 mb-5" Outlined="true">
+
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    Crear nuevo rol
+                </MudText>
+
+                <MudStack Row="true"
+                          AlignItems="AlignItems.End">
+
+                    <MudTextField @bind-Value="_newRoleName"
+                                  Label="Nombre del rol"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Required="true" />
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="CreateRole">
+                        Guardar
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Default"
+                               OnClick="CancelCreate">
+                        Cancelar
+                    </MudButton>
+
+                </MudStack>
+
+            </MudPaper>
+        }
+
+
+        <MudTextField @bind-Value="_searchText"
+                      Label="Buscar"
+                      Placeholder="Buscar rol..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
+                      Class="mb-4" />
+
+
+        @if (_loading)
+        {
+            <MudProgressLinear Color="Color.Primary"
+                               Indeterminate="true" />
+        }
+        else
+        {
+            <MudTable Items="FilteredRoles"
+                      Hover="true"
+                      Striped="true">
+
+                <HeaderContent>
+
+                    <MudTh>Rol</MudTh>
+
+                    <MudTh Style="text-align:right">
+                        Acciones
+                    </MudTh>
+
+                </HeaderContent>
+
+                <RowTemplate>
+
+                    <MudTd DataLabel="Rol">
+
+                        <MudStack Row="true"
+                                  AlignItems="AlignItems.Center">
+
+                            <MudIcon Icon="@Icons.Material.Filled.Security"
+                                     Color="Color.Primary" />
+
+                            <MudText>
+                                @context.Name
+                            </MudText>
+
+                        </MudStack>
+
+                    </MudTd>
+
+
+                    <MudTd DataLabel="Acciones"
+                           Style="text-align:right">
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Key"
+                                       Color="Color.Primary"
+                                       Title="Permisos"
+                                       Href="@($"/admin/roles/{context.Id}/permissions")" />
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Title="Eliminar"
+                                       Disabled="@(context.Name == "Administrator")"
+                                       OnClick="@(() => DeleteRole(context))" />
+
+                    </MudTd>
+
+                </RowTemplate>
+
+                <NoRecordsContent>
+                    <MudText Class="pa-4">
+                        No existen roles.
+                    </MudText>
+                </NoRecordsContent>
+
+            </MudTable>
+        }
+
+    </MudPaper>
+
+</MudContainer>
+
+
+@code {
+
+    private List<IdentityRole> _roles = new();
+
+    private string _searchText = string.Empty;
+
+    private string _newRoleName = string.Empty;
+
+    private bool _loading = true;
+
+    private bool _showCreateRole;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoles();
+    }
+
+
+    private async Task LoadRoles()
+    {
+        _loading = true;
+
+        _roles = await RoleManager.Roles
+            .OrderBy(r => r.Name)
+            .ToListAsync();
+
+        _loading = false;
+    }
+
+
+    private IEnumerable<IdentityRole> FilteredRoles
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_searchText))
+                return _roles;
+
+            return _roles.Where(r =>
+                r.Name != null &&
+                r.Name.Contains(
+                    _searchText,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+
+    private void OpenCreateRole()
+    {
+        _newRoleName = string.Empty;
+
+        _showCreateRole = true;
+    }
+
+
+    private void CancelCreate()
+    {
+        _showCreateRole = false;
+
+        _newRoleName = string.Empty;
+    }
+
+
+    private async Task CreateRole()
+    {
+        if (string.IsNullOrWhiteSpace(_newRoleName))
+        {
+            Snackbar.Add(
+                "Introduce un nombre para el rol.",
+                Severity.Warning);
+
+            return;
+        }
+
+        var roleName = _newRoleName.Trim();
+
+
+        if (await RoleManager.RoleExistsAsync(roleName))
+        {
+            Snackbar.Add(
+                "El rol ya existe.",
+                Severity.Warning);
+
+            return;
+        }
+
+
+        var result = await RoleManager.CreateAsync(
+            new IdentityRole(roleName));
+
+
+        if (result.Succeeded)
+        {
+            Snackbar.Add(
+                $"Rol '{roleName}' creado correctamente.",
+                Severity.Success);
+
+            _showCreateRole = false;
+
+            _newRoleName = string.Empty;
+
+            await LoadRoles();
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                Snackbar.Add(
+                    error.Description,
+                    Severity.Error);
+            }
+        }
+    }
+
+
+    private async Task DeleteRole(IdentityRole role)
+    {
+
+        if (role.Name == "Administrator")
+        {
+            Snackbar.Add(
+                "El rol Administrator no puede eliminarse.",
+                Severity.Error);
+
+            return;
+        }
+
+
+        var result = await RoleManager.DeleteAsync(role);
+
+
+        if (result.Succeeded)
+        {
+            Snackbar.Add(
+                $"Rol '{role.Name}' eliminado.",
+                Severity.Success);
+
+            await LoadRoles();
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+            {
+                Snackbar.Add(
+                    error.Description,
+                    Severity.Error);
+            }
+        }
+    }
+}

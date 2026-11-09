@@ -1,0 +1,355 @@
+@page "/admin/users"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using PruebaMud.Models.Security
+@using PruebaMud.Services
+
+@attribute [Authorize(Roles = "Administrator")]
+
+@inject UserAdministrationService UserService
+
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Gestión de usuarios</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <MudPaper Class="pa-6" Elevation="1">
+
+        <MudStack Row="true"
+                  Justify="Justify.SpaceBetween"
+                  AlignItems="AlignItems.Center"
+                  Class="mb-6">
+
+            <div>
+                <MudText Typo="Typo.h4">
+                    Gestión de usuarios
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Administra los usuarios y sus roles de acceso.
+                </MudText>
+            </div>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PersonAdd"
+                       OnClick="CreateUser">
+                Nuevo usuario
+            </MudButton>
+
+        </MudStack>
+
+
+        <MudTextField @bind-Value="_search"
+                      Placeholder="Buscar usuario..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
+                      Class="mb-4" />
+
+
+        <MudTable Items="FilteredUsers"
+                  Hover="true"
+                  Striped="true"
+                  Loading="_loading">
+
+            <HeaderContent>
+
+                <MudTh>Usuario</MudTh>
+
+                <MudTh>Email</MudTh>
+
+                <MudTh>Roles</MudTh>
+
+                <MudTh>Estado</MudTh>
+
+                <MudTh Style="text-align:right;">
+                    Acciones
+                </MudTh>
+
+            </HeaderContent>
+
+
+            <RowTemplate>
+
+                <MudTd DataLabel="Usuario">
+
+                    <MudStack Row="true"
+                              AlignItems="AlignItems.Center">
+
+                        <MudAvatar Color="Color.Primary"
+                                   Size="Size.Small">
+
+                            @GetInitials(context)
+
+                        </MudAvatar>
+
+                        <MudText>
+                            @context.UserName
+                        </MudText>
+
+                    </MudStack>
+
+                </MudTd>
+
+
+                <MudTd DataLabel="Email">
+
+                    @context.Email
+
+                </MudTd>
+
+
+                <MudTd DataLabel="Roles">
+
+                    <MudStack Row="true"
+                              Spacing="1">
+
+                        @if (context.Roles.Count == 0)
+                        {
+                            <MudChip T="string"
+                                     Size="Size.Small">
+                                Sin rol
+                            </MudChip>
+                        }
+                        else
+                        {
+                            @foreach (var role in context.Roles)
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="Color.Primary"
+                                         Variant="Variant.Outlined">
+                                    @role
+                                </MudChip>
+                            }
+                        }
+
+                    </MudStack>
+
+                </MudTd>
+
+
+                <MudTd DataLabel="Estado">
+
+                    @if (context.IsLocked)
+                    {
+                        <MudChip T="string"
+                                 Color="Color.Error"
+                                 Size="Size.Small">
+
+                            Bloqueado
+
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string"
+                                 Color="Color.Success"
+                                 Size="Size.Small">
+
+                            Activo
+
+                        </MudChip>
+                    }
+
+                </MudTd>
+
+
+                <MudTd DataLabel="Acciones"
+                       Style="text-align:right;">
+
+                    <MudTooltip Text="Gestionar roles">
+
+                        <MudIconButton
+                            Icon="@Icons.Material.Filled.ManageAccounts"
+                            Color="Color.Primary"
+                            OnClick="@(() => ManageUser(context))" />
+
+                    </MudTooltip>
+
+
+                    @if (context.IsLocked)
+                    {
+                        <MudTooltip Text="Desbloquear usuario">
+
+                            <MudIconButton
+                                Icon="@Icons.Material.Filled.LockOpen"
+                                Color="Color.Success"
+                                OnClick="@(() => UnlockUser(context))" />
+
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="Bloquear usuario">
+
+                            <MudIconButton
+                                Icon="@Icons.Material.Filled.Lock"
+                                Color="Color.Error"
+                                OnClick="@(() => LockUser(context))" />
+
+                        </MudTooltip>
+                    }
+
+                </MudTd>
+
+            </RowTemplate>
+
+
+            <NoRecordsContent>
+
+                <MudText Class="pa-4">
+
+                    No se han encontrado usuarios.
+
+                </MudText>
+
+            </NoRecordsContent>
+
+        </MudTable>
+
+    </MudPaper>
+
+</MudContainer>
+
+@code {
+
+    private List<UserListItem> _users = new();
+
+    private bool _loading = true;
+
+    private string _search = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+
+    private async Task LoadUsers()
+    {
+        _loading = true;
+
+        try
+        {
+            _users = await UserService.GetUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Error al cargar usuarios: {ex.Message}",
+                Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+
+    private IEnumerable<UserListItem> FilteredUsers
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+                return _users;
+
+            return _users.Where(u =>
+                u.UserName.Contains(
+                    _search,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                u.Email.Contains(
+                    _search,
+                    StringComparison.OrdinalIgnoreCase)
+                ||
+                u.Roles.Any(r =>
+                    r.Contains(
+                        _search,
+                        StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+
+    private string GetInitials(UserListItem user)
+    {
+        if (!string.IsNullOrWhiteSpace(user.UserName))
+        {
+            return user.UserName
+                .Substring(0, 1)
+                .ToUpper();
+        }
+
+        return "?";
+    }
+
+
+    private void CreateUser()
+    {
+        Navigation.NavigateTo("/admin/users/new");
+    }
+
+
+    private void ManageUser(UserListItem user)
+    {
+        Navigation.NavigateTo(
+            $"/admin/users/{user.Id}");
+    }
+
+
+    private async Task LockUser(UserListItem user)
+    {
+        var result =
+            await UserService.LockUserAsync(user.Id);
+
+        if (result.Succeeded)
+        {
+            Snackbar.Add(
+                "Usuario bloqueado correctamente.",
+                Severity.Success);
+
+            await LoadUsers();
+        }
+        else
+        {
+            ShowErrors(result.Errors);
+        }
+    }
+
+
+    private async Task UnlockUser(UserListItem user)
+    {
+        var result =
+            await UserService.UnlockUserAsync(user.Id);
+
+        if (result.Succeeded)
+        {
+            Snackbar.Add(
+                "Usuario desbloqueado correctamente.",
+                Severity.Success);
+
+            await LoadUsers();
+        }
+        else
+        {
+            ShowErrors(result.Errors);
+        }
+    }
+
+
+    private void ShowErrors(
+        IEnumerable<Microsoft.AspNetCore.Identity.IdentityError> errors)
+    {
+        foreach (var error in errors)
+        {
+            Snackbar.Add(
+                error.Description,
+                Severity.Error);
+        }
+    }
+}

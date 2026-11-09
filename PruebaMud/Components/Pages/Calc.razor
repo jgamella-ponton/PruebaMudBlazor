@@ -10,6 +10,7 @@
 @inject N8nService N8nService
 @inject NavigationManager Navigation
 @inject ResultStore ResultStore
+@inject CalcResultadoService ResultadoService
 
 <PageTitle>Calc</PageTitle>
 
@@ -55,9 +56,7 @@
 
 @if (errorEnvio is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">
-        No se pudo completar el envío a n8n. @errorEnvio
-    </MudAlert>
+    <MudAlert Severity="Severity.Error" Class="mb-4">@errorEnvio</MudAlert>
 }
 
 @if (error is null && datos is null && !cargando)
@@ -254,13 +253,27 @@ else if (datos is not null)
 
             if (!ok)
             {
-                errorEnvio = mensajeError;
+                errorEnvio = $"No se pudo completar el envío a n8n. {mensajeError}";
                 return;
             }
 
-            State.RespuestaJson = json;
-            State.RespuestaFecha = DateTime.Now;
-            Navigation.NavigateTo("/calcresult");
+            // La respuesta se guarda en la base de datos antes de mostrarla
+            int idResultado;
+            try
+            {
+                idResultado = await ResultadoService.CrearAsync(
+                    json!,
+                    nombreArchivo,
+                    datos.RequestData?.ConnectRequestID,
+                    datos.AssayData?.PlateCode);
+            }
+            catch (Exception ex)
+            {
+                errorEnvio = $"n8n respondió correctamente, pero no se pudo guardar el resultado en la base de datos: {ex.Message}";
+                return;
+            }
+
+            Navigation.NavigateTo($"/calcresult/{idResultado}");
         }
         finally
         {
@@ -335,7 +348,7 @@ else if (datos is not null)
     };
 
     //Crea una funcion para el cambio el color de la celda segun el valor del IMSName, uso <MudTd> en lugar de <td> para poder usar el parámetro DataLabel
-    private string ColorCeldaIMS(string imsName) => imsName switch
+    private static string ColorCeldaIMS(string? imsName) => imsName switch
     {
         "MPA" => "#d7dd17ff", // Amarillo
         "MTP" => "#36db41ff", // Verde

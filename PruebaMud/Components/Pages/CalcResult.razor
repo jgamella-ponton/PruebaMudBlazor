@@ -1,9 +1,11 @@
 @page "/calcresult"
+@page "/calcresult/{Id:int}"
 @using System.Globalization
 @using System.Text.Encodings.Web
 @using System.Text.Json
+@using PruebaMud.Models
 @using PruebaMud.Services
-@inject CalcState State
+@inject CalcResultadoService ResultadoService
 
 <PageTitle>Resultado del cálculo</PageTitle>
 
@@ -11,24 +13,38 @@
     Volver a Calc
 </MudButton>
 
-@if (errorLectura is not null)
+@if (cargando)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (errorLectura is not null)
 {
     <MudAlert Severity="Severity.Error">@errorLectura</MudAlert>
 }
-else if (State.RespuestaJson is null)
+else if (resultado is null)
 {
     <MudAlert Severity="Severity.Info">
-        No hay ningún resultado todavía. Carga un fichero JSON en Calc y envíalo a n8n.
+        @(Id.HasValue
+            ? $"No se encontró el resultado #{Id}."
+            : "Todavía no hay ningún resultado guardado. Carga un fichero JSON en Calc y envíalo a n8n.")
     </MudAlert>
 }
 else
 {
-    <MudText Typo="Typo.h5">Resultado del cálculo</MudText>
+    <MudText Typo="Typo.h5">Resultado del cálculo #@resultado.Id</MudText>
     <MudText Typo="Typo.caption" Class="mb-4">
-        Recibido el @State.RespuestaFecha?.ToString("dd/MM/yyyy HH:mm:ss")
-        @if (State.NombreArchivo is not null)
+        Guardado el @resultado.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")
+        @if (resultado.NombreArchivo is not null)
         {
-            <span> · Fichero: @State.NombreArchivo</span>
+            <span> · Fichero: @resultado.NombreArchivo</span>
+        }
+        @if (resultado.RequestId is not null)
+        {
+            <span> · Solicitud: @resultado.RequestId</span>
+        }
+        @if (resultado.PlateCode is not null)
+        {
+            <span> · Placa: @resultado.PlateCode</span>
         }
     </MudText>
 
@@ -108,6 +124,9 @@ else
 }
 
 @code {
+    // Con /calcresult/5 se muestra el resultado 5; con /calcresult, el más reciente
+    [Parameter] public int? Id { get; set; }
+
     private static readonly JsonSerializerOptions OpcionesEscritura = new()
     {
         WriteIndented = true,
@@ -119,19 +138,45 @@ else
     private readonly List<(string Clave, string Valor)> resumen = new();
     private readonly List<TablaDinamica> tablas = new();
     private readonly List<(string Clave, string Json)> bloques = new();
+    private CalcResultado? resultado;
     private string? jsonFormateado;
     private string? errorLectura;
     private string? estadoError;
+    private bool cargando = true;
+
+    // Se ejecuta al abrir la página y también si cambia el Id de la ruta
+    protected override async Task OnParametersSetAsync()
+    {
+        cargando = true;
+        Reiniciar();
+
+        resultado = Id.HasValue
+            ? await ResultadoService.ObtenerPorIdAsync(Id.Value)
+            : await ResultadoService.ObtenerUltimoAsync();
+
+        if (resultado is not null)
+            Interpretar(resultado.RespuestaJson);
+
+        cargando = false;
+    }
+
+    private void Reiniciar()
+    {
+        resumen.Clear();
+        tablas.Clear();
+        bloques.Clear();
+        resultado = null;
+        jsonFormateado = null;
+        errorLectura = null;
+        estadoError = null;
+    }
 
     // La respuesta de n8n puede tener cualquier forma, así que se interpreta de forma genérica:
     //  - valores simples (texto, números...)      -> tabla "Resumen"
     //  - listas de objetos                         -> una tabla con una columna por clave
     //  - objetos anidados / listas de valores      -> bloque de JSON con sangrías
-    protected override void OnInitialized()
+    private void Interpretar(string json)
     {
-        var json = State.RespuestaJson;
-        if (json is null) return;
-
         try
         {
             using var documento = JsonDocument.Parse(json);
@@ -166,7 +211,7 @@ else
         }
         catch (JsonException ex)
         {
-            errorLectura = $"No se pudo interpretar la respuesta de n8n: {ex.Message}";
+            errorLectura = $"No se pudo interpretar la respuesta guardada: {ex.Message}";
         }
     }
 

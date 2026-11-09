@@ -33,9 +33,12 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.SignIn.RequireConfirmedAccount = false)   // false para pruebas locales
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
+        .AddRoles<IdentityRole>()
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddSignInManager()
+        .AddDefaultTokenProviders();
+builder.Services.AddScoped<UserAdministrationService>();
+builder.Services.AddScoped<RoleAdministrationService>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -53,6 +56,9 @@ builder.Services.AddScoped<ResultStore>();
 builder.Services.AddHttpClient<N8nService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<CalcState>();
 // Agregado para la llamada a N8N
+
+//Agreado para la respuesta de N8N, guardar en la base de datos
+builder.Services.AddScoped<CalcResultadoService>();
 
 
 var app = builder.Build();
@@ -78,5 +84,13 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// Añadida para la gestion de roles
+ using (var scope = app.Services.CreateScope())
+ {
+     await IdentitySeeder.SeedRolesAsync(scope.ServiceProvider);
+ }
+
+ 
 
 app.Run();

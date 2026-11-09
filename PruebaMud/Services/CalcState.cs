@@ -2,26 +2,20 @@ using PruebaMud.Models;
 
 namespace PruebaMud.Services;
 
-// Estado compartido entre las páginas /calc y /calcresult.
-// Es un servicio "scoped": en Blazor Server vive mientras dure la sesión del usuario (circuito).
-// Si el usuario recarga el navegador (F5), se pierde.
+// Estado compartido entre /calc y /calcresult: conserva el fichero cargado
+// para que no se pierda al volver desde la página de resultados.
+// Es un servicio "scoped": vive mientras dure la sesión del usuario (circuito).
+// La respuesta de n8n ya no se guarda aquí, sino en la tabla CalcResultados.
 public class CalcState
 {
-    // Fichero cargado en /calc (así no se pierde al volver desde /calcresult)
     public string? NombreArchivo { get; set; }
     public PatientAssaysFile? Datos { get; set; }
     public string? JsonFormateado { get; set; }
-
-    // Última respuesta recibida de n8n
-    public string? RespuestaJson { get; set; }
-    public DateTime? RespuestaFecha { get; set; }
 
     public void LimpiarTodo()
     {
         NombreArchivo = null;
         Datos = null;
         JsonFormateado = null;
-        RespuestaJson = null;
-        RespuestaFecha = null;
     }
 }

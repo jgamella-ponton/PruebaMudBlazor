@@ -1,0 +1,332 @@
+@page "/admin/users/{UserId}"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using PruebaMud.Data
+@using PruebaMud.Services
+
+@attribute [Authorize(Roles = "Administrator")]
+
+@inject UserAdministrationService UserService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Editar usuario</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true"
+                           Color="Color.Primary" />
+    }
+    else if (_user == null)
+    {
+        <MudAlert Severity="Severity.Error">
+            No se ha encontrado el usuario.
+        </MudAlert>
+    }
+    else
+    {
+        <MudPaper Class="pa-6" Elevation="1">
+
+            <MudStack Spacing="4">
+
+                <!-- Cabecera -->
+
+                <div>
+                    <MudText Typo="Typo.h4">
+                        Editar usuario
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Color="Color.Secondary">
+                        Gestiona la información y los roles del usuario.
+                    </MudText>
+                </div>
+
+                <MudDivider />
+
+
+                <!-- Usuario -->
+
+                <MudText Typo="Typo.h6">
+                    Información del usuario
+                </MudText>
+
+                <MudTextField Value="@_user.UserName"
+                              Label="Usuario"
+                              ReadOnly="true"
+                              Variant="Variant.Outlined" />
+
+                <MudTextField Value="@_user.Email"
+                              Label="Email"
+                              ReadOnly="true"
+                              Variant="Variant.Outlined" />
+
+
+                <MudDivider />
+
+
+                <!-- Roles -->
+
+                <MudText Typo="Typo.h6">
+                    Roles
+                </MudText>
+
+                <MudText Typo="Typo.body2"
+                         Color="Color.Secondary">
+                    Selecciona los roles que tendrá asignados este usuario.
+                </MudText>
+
+
+                @foreach (var role in _availableRoles)
+                {
+                    <MudCheckBox T="bool"
+                                 Value="@IsRoleSelected(role)"
+                                 ValueChanged="@(value => RoleChanged(role, value))"
+                                 Label="@role"
+                                 Color="Color.Primary" />
+                }
+
+
+                <MudDivider />
+
+
+                <!-- Estado -->
+
+                <MudText Typo="Typo.h6">
+                    Estado
+                </MudText>
+
+                @if (_isLocked)
+                {
+                    <MudAlert Severity="Severity.Warning"
+                              Variant="Variant.Outlined">
+                        Este usuario está bloqueado.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success"
+                              Variant="Variant.Outlined">
+                        El usuario está activo.
+                    </MudAlert>
+                }
+
+
+                <!-- Botones -->
+
+                <MudStack Row="true"
+                          Justify="Justify.FlexEnd"
+                          Spacing="2">
+
+                    <MudButton Variant="Variant.Text"
+                               OnClick="Cancel">
+                        Cancelar
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Save"
+                               Disabled="_saving"
+                               OnClick="Save">
+
+                        @if (_saving)
+                        {
+                            <MudProgressCircular Size="Size.Small"
+                                                 Indeterminate="true"
+                                                 Class="mr-2" />
+                        }
+
+                        Guardar
+
+                    </MudButton>
+
+                </MudStack>
+
+            </MudStack>
+
+        </MudPaper>
+    }
+
+</MudContainer>
+
+
+@code {
+
+    [Parameter]
+    public string UserId { get; set; } = string.Empty;
+
+
+    private ApplicationUser? _user;
+
+    private List<string> _availableRoles = new();
+
+    private HashSet<string> _selectedRoles = new();
+
+    private bool _loading = true;
+
+    private bool _saving = false;
+
+    private bool _isLocked;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadUser();
+    }
+
+
+    private async Task LoadUser()
+    {
+        _loading = true;
+
+        try
+        {
+            // Usuario
+            _user = await UserService.GetUserAsync(UserId);
+
+            if (_user == null)
+                return;
+
+            // Todos los roles existentes
+            _availableRoles =
+                await UserService.GetRolesAsync();
+
+            // Roles actuales del usuario
+            var userRoles =
+                await UserService.GetUserRolesAsync(UserId);
+
+            _selectedRoles =
+                new HashSet<string>(userRoles);
+
+            // Estado
+            _isLocked =
+                _user.LockoutEnd.HasValue &&
+                _user.LockoutEnd > DateTimeOffset.UtcNow;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Error al cargar el usuario: {ex.Message}",
+                Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+
+    private bool IsRoleSelected(string role)
+    {
+        return _selectedRoles.Contains(role);
+    }
+
+
+    private void RoleChanged(
+        string role,
+        bool selected)
+    {
+        if (selected)
+        {
+            _selectedRoles.Add(role);
+        }
+        else
+        {
+            _selectedRoles.Remove(role);
+        }
+    }
+
+
+    private async Task Save()
+    {
+        if (_user == null)
+            return;
+
+        _saving = true;
+
+        try
+        {
+            var currentRoles =
+                await UserService.GetUserRolesAsync(UserId);
+
+
+            // Roles que tenemos que añadir
+
+            var rolesToAdd =
+                _selectedRoles.Except(currentRoles);
+
+            foreach (var role in rolesToAdd)
+            {
+                var result =
+                    await UserService.AddToRoleAsync(
+                        UserId,
+                        role);
+
+                if (!result.Succeeded)
+                {
+                    ShowErrors(result.Errors);
+                    return;
+                }
+            }
+
+
+            // Roles que tenemos que quitar
+
+            var rolesToRemove =
+                currentRoles.Except(_selectedRoles);
+
+            foreach (var role in rolesToRemove)
+            {
+                var result =
+                    await UserService.RemoveFromRoleAsync(
+                        UserId,
+                        role);
+
+                if (!result.Succeeded)
+                {
+                    ShowErrors(result.Errors);
+                    return;
+                }
+            }
+
+
+            Snackbar.Add(
+                "Usuario actualizado correctamente.",
+                Severity.Success);
+
+            Navigation.NavigateTo("/admin/users");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Error al guardar: {ex.Message}",
+                Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/admin/users");
+    }
+
+
+    private void ShowErrors(
+        IEnumerable<IdentityError> errors)
+    {
+        foreach (var error in errors)
+        {
+            Snackbar.Add(
+                error.Description,
+                Severity.Error);
+        }
+    }
+}

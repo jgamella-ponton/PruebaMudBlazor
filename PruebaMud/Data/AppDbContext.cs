@@ -1,20 +1,25 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PruebaMud.Models;
 
+
 namespace PruebaMud.Data;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser>
+
 // public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
+     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+     {
+     }
 
+    
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<Cliente> Clientes => Set<Cliente>();
-
     public DbSet<Request> Requests => Set<Request>();
+    public DbSet<CalcResultado> CalcResultados => Set<CalcResultado>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,5 +35,23 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
              .HasForeignKey(p => p.ClienteId)
              .OnDelete(DeleteBehavior.Restrict);
         });
+        
+        modelBuilder.Entity<Request>(e =>
+        {
+            // Restrict: no se puede borrar un cliente que tenga solicitudes
+            e.HasOne(r => r.Cliente)
+             .WithMany()
+             .HasForeignKey(r => r.ClienteId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CalcResultado>(e =>
+        {
+            e.Property(c => c.NombreArchivo).HasMaxLength(260);
+            e.Property(c => c.PlateCode).HasMaxLength(100);
+            // RespuestaJson queda como nvarchar(max), sin límite de longitud
+        });
+
     }
+    
 }

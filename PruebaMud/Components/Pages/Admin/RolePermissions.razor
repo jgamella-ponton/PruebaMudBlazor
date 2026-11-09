@@ -1,0 +1,213 @@
+@page "/admin/roles/{RoleId}/permissions"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using PruebaMud.Models.Security
+@using PruebaMud.Services
+
+@attribute [Authorize(Roles = "Administrator")]
+
+@inject RoleAdministrationService RoleService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Permisos del rol</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-6">
+
+    @if (_loading)
+    {
+        <MudProgressLinear
+            Indeterminate="true"
+            Color="Color.Primary" />
+    }
+    else if (_role == null)
+    {
+        <MudAlert Severity="Severity.Error">
+            No se ha encontrado el rol.
+        </MudAlert>
+    }
+    else
+    {
+        <MudPaper Class="pa-6" Elevation="1">
+
+            <MudStack Spacing="4">
+
+                <div>
+                    <MudText Typo="Typo.h4">
+                        Permisos
+                    </MudText>
+
+                    <MudText Typo="Typo.body1">
+                        Rol: <strong>@_role.Name</strong>
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Color="Color.Secondary">
+                        Selecciona las acciones que pueden realizar
+                        los usuarios con este rol.
+                    </MudText>
+                </div>
+
+                <MudDivider />
+
+                <MudExpansionPanels MultiExpansion="true">
+
+                    @foreach (var group in _permissionGroups)
+                    {
+                        <MudExpansionPanel
+                            Text="@group.Name"
+                            Expanded="true">
+
+                            <MudStack Spacing="1">
+
+                                @foreach (var permission in group.Permissions)
+                                {
+                                    <MudCheckBox
+                                        T="bool"
+                                        @bind-Value="permission.Selected"
+                                        Label="@permission.Description"
+                                        Color="Color.Primary" />
+                                }
+
+                            </MudStack>
+
+                        </MudExpansionPanel>
+                    }
+
+                </MudExpansionPanels>
+
+                <MudDivider />
+
+                <MudStack Row="true"
+                          Justify="Justify.FlexEnd"
+                          Spacing="2">
+
+                    <MudButton Variant="Variant.Text"
+                               OnClick="Cancel">
+                        Cancelar
+                    </MudButton>
+
+                    <MudButton
+                        Variant="Variant.Filled"
+                        Color="Color.Primary"
+                        StartIcon="@Icons.Material.Filled.Save"
+                        Disabled="_saving"
+                        OnClick="Save">
+
+                        Guardar permisos
+
+                    </MudButton>
+
+                </MudStack>
+
+            </MudStack>
+
+        </MudPaper>
+    }
+
+</MudContainer>
+
+
+@code {
+
+    [Parameter]
+    public string RoleId { get; set; } = string.Empty;
+
+    private IdentityRole? _role;
+
+    private List<PermissionGroup> _permissionGroups = new();
+
+    private bool _loading = true;
+
+    private bool _saving;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Load();
+    }
+
+
+    private async Task Load()
+    {
+        _loading = true;
+
+        try
+        {
+            _role =
+                await RoleService.GetRoleAsync(RoleId);
+
+            if (_role == null)
+                return;
+
+            _permissionGroups =
+                await RoleService
+                    .GetRolePermissionsAsync(RoleId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Error al cargar los permisos: {ex.Message}",
+                Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+
+    private async Task Save()
+    {
+        _saving = true;
+
+        try
+        {
+            var selectedPermissions =
+                _permissionGroups
+                    .SelectMany(g => g.Permissions)
+                    .Where(p => p.Selected)
+                    .Select(p => p.Name)
+                    .ToList();
+
+            var result =
+                await RoleService.SavePermissionsAsync(
+                    RoleId,
+                    selectedPermissions);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add(
+                        error.Description,
+                        Severity.Error);
+                }
+
+                return;
+            }
+
+            Snackbar.Add(
+                "Permisos actualizados correctamente.",
+                Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Error al guardar los permisos: {ex.Message}",
+                Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/admin/roles");
+    }
+}
