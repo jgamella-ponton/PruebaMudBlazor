@@ -13,6 +13,14 @@
       "PackagePath": "staticwebassets\\favicon.png"
     },
     {
+      "Id": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\images\\branding\\biohope_logo.png",
+      "PackagePath": "staticwebassets\\images\\branding\\biohope_logo.png"
+    },
+    {
+      "Id": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js",
+      "PackagePath": "staticwebassets\\js\\report.js"
+    },
+    {
       "Id": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
       "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css"
     },

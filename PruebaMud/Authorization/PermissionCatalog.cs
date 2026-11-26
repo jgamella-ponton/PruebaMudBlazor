@@ -8,6 +8,9 @@ public static class PermissionCatalog
     {
         return new List<PermissionGroup>
         {
+            // =========================================================
+            // USUARIOS
+            // =========================================================
             new()
             {
                 Name = "Usuarios",
@@ -36,6 +39,9 @@ public static class PermissionCatalog
                 }
             },
 
+            // =========================================================
+            // ROLES
+            // =========================================================
             new()
             {
                 Name = "Roles",
@@ -69,7 +75,143 @@ public static class PermissionCatalog
                 }
             },
 
-            
-        };
+            // =========================================================
+            // CLIENTES
+            // =========================================================
+            // new()
+            // {
+            //     Name = "Clientes",
+            //     Permissions =
+            //     {
+            //         new()
+            //         {
+            //             Name = Permissions.Clientes.View,
+            //             Description = "Consultar clientes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Clientes.Create,
+            //             Description = "Crear clientes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Clientes.Edit,
+            //             Description = "Modificar clientes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Clientes.Delete,
+            //             Description = "Eliminar clientes"
+            //         }
+            //     }
+            // },
+
+            // // =========================================================
+            // // PEDIDOS
+            // // =========================================================
+            // new()
+            // {
+            //     Name = "Pedidos",
+            //     Permissions =
+            //     {
+            //         new()
+            //         {
+            //             Name = Permissions.Pedidos.View,
+            //             Description = "Consultar pedidos"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Pedidos.Create,
+            //             Description = "Crear pedidos"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Pedidos.Edit,
+            //             Description = "Modificar pedidos"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Pedidos.Delete,
+            //             Description = "Eliminar pedidos"
+            //         }
+            //     }
+            // },
+
+            // =========================================================
+            // REQUESTS
+            // =========================================================
+            // new()
+            // {
+            //     Name = "Solicitudes",
+            //     Permissions =
+            //     {
+            //         new()
+            //         {
+            //             Name = Permissions.Requests.View,
+            //             Description = "Consultar solicitudes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Requests.Create,
+            //             Description = "Crear solicitudes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Requests.Edit,
+            //             Description = "Modificar solicitudes"
+            //         },
+            //         new()
+            //         {
+            //             Name = Permissions.Requests.Delete,
+            //             Description = "Eliminar solicitudes"
+            //         }
+            //     }
+            // },
+
+            // =========================================================
+            // RESULTADOS
+            // =========================================================
+        //     new()
+        //     {
+        //         Name = "Resultados",
+        //         Permissions =
+        //         {
+        //             new()
+        //             {
+        //                 Name = Permissions.Results.View,
+        //                 Description = "Consultar resultados"
+        //             },
+        //             new()
+        //             {
+        //                 Name = Permissions.Results.Create,
+        //                 Description = "Crear resultados"
+        //             },
+        //             new()
+        //             {
+        //                 Name = Permissions.Results.Edit,
+        //                 Description = "Modificar resultados"
+        //             },
+        //             new()
+        //             {
+        //                 Name = Permissions.Results.Delete,
+        //                 Description = "Eliminar resultados"
+        //             }
+        //         }
+        //     }
+         };
+    }
+
+
+    // =============================================================
+    // DEVUELVE TODOS LOS PERMISOS EXISTENTES
+    // =============================================================
+
+    public static List<string> GetAllPermissionNames()
+    {
+        return GetAll()
+            .SelectMany(group => group.Permissions)
+            .Select(permission => permission.Name)
+            .Distinct()
+            .ToList();
     }
 }

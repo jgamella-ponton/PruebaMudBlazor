@@ -227,3 +227,4 @@ C:\Users\FranciscoJavierGamel\VSCODEPROJECTS\PruebaMud\obj\Debug\net9.0\refint\P
 C:\Users\FranciscoJavierGamel\VSCODEPROJECTS\PruebaMud\obj\Debug\net9.0\PruebaMud.pdb
 C:\Users\FranciscoJavierGamel\VSCODEPROJECTS\PruebaMud\obj\Debug\net9.0\PruebaMud.genruntimeconfig.cache
 C:\Users\FranciscoJavierGamel\VSCODEPROJECTS\PruebaMud\obj\Debug\net9.0\ref\PruebaMud.dll
+C:\Users\FranciscoJavierGamel\VSCODEPROJECTS\PruebaMud\obj\Debug\net9.0\compressed\3mxq7vzjf3-871ymhcdjy.gz

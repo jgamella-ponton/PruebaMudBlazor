@@ -1,0 +1,975 @@
+@page "/report-preview"
+@rendermode InteractiveServer
+
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+@attribute [Authorize]
+
+
+<PageTitle>Vista previa del informe</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="my-6">
+
+    @* ==========================================================
+       BARRA DE HERRAMIENTAS
+       ========================================================== *@
+
+    @* <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4"> *@
+    @* Agregado para quitar los botones *@
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4 report-toolbar">
+        @* Agregado para quitar los botones *@
+        <div>
+            <MudText Typo="Typo.h5">
+                Vista previa del informe
+            </MudText>
+
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Mockup del informe final Immunobiogram Plus®
+            </MudText>
+        </div>
+        
+
+        <MudStack Row="true">
+
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Print" OnClick="PrintReport">
+                Imprimir
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                       OnClick="GeneratePdf">
+                Generar PDF
+            </MudButton>
+
+        </MudStack>
+
+    </MudStack>
+
+
+    @* ==========================================================
+       INFORME
+       ========================================================== *@
+   
+
+    <MudPaper Class="report pa-6" Elevation="3">
+
+        @* CABECERA *@
+
+        <div class="report-header">
+
+            <div>
+
+                <MudText Typo="Typo.h4" Class="report-title">
+                    IMMUNOBIOGRAM Plus® - INFORME
+                </MudText>
+
+                <div class="header-information">
+
+                    <strong>Biohope - informe de nº.</strong>
+                    DEMO-0001
+
+                    <br />
+
+                    <strong>ID de paciente externo:</strong>
+                    DEMO-PATIENT
+
+                    <br />
+
+                    <div class="date-row">
+
+                        <div>
+                            <strong>Fecha del informe:</strong>
+                            25/11/2026
+                        </div>
+
+                        <div>
+                            <strong>Fecha de la petición:</strong>
+                            20/11/2026
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="logo">
+                <img src="/images/branding/biohope_logo.png" alt="Biohope" class="biohope-logo" />
+            </div>
+
+        </div>
+
+
+        @* ======================================================
+           PACIENTE / MUESTRA / FACULTATIVO
+           ====================================================== *@
+
+        <div class="information-grid">
+
+            <div class="information-section">
+
+                <div class="section-header">
+                    PACIENTE
+                </div>
+
+                <div class="section-body">
+                    <strong>ID Paciente:</strong> DEMO-001
+                    <br />
+                    <strong>Nombre:</strong> DEMO
+                    <br />
+                    <strong>Apellidos:</strong> PACIENTE
+                    <br />
+                    <strong>Edad:</strong> --
+                    <br />
+                    <strong>Género:</strong> --
+                    <br />
+                    <strong>Fecha último trasplante:</strong> --
+                    <br />
+                    <strong>Motivo de la prueba:</strong> Demostración
+                </div>
+
+            </div>
+
+
+            <div class="information-section">
+
+                <div class="section-header">
+                    MUESTRA
+                </div>
+
+                <div class="section-body">
+                    <strong>Centro analítico:</strong> Biohope
+                    <br />
+                    <strong>Tipo de muestra:</strong> Sangre total
+                    <br />
+                    <strong>Fecha de solicitud:</strong> 20/11/2026
+                    <br />
+                    <strong>Fecha de extracción:</strong> 20/11/2026
+                    <br />
+                    <strong>Grupo de determinación:</strong> Inmunología
+                </div>
+
+            </div>
+
+
+            <div class="information-section">
+
+                <div class="section-header">
+                    FACULTATIVO
+                </div>
+
+                <div class="section-body">
+                    <strong>ID de facultativo:</strong> DEMO
+                    <br />
+                    <strong>Nombre facultativo:</strong> DEMO
+                    <br />
+                    <strong>Departamento:</strong> Trasplante
+                    <br />
+                    <strong>Centro:</strong> DEMO
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* ======================================================
+           USO PREVISTO
+           ====================================================== *@
+
+        <div class="report-section">
+
+            <MudText Typo="Typo.h6" Class="report-section-title">
+                IMMUNOBIOGRAM Plus®: USO PREVISTO
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="report-paragraph">
+
+                Immunobiogram Plus es una prueba funcional orientada a
+                evaluar la respuesta farmacodinámica frente a tratamientos
+                inmunosupresores mediante el análisis de la actividad
+                celular.
+
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="report-paragraph">
+
+                El informe presenta los resultados obtenidos para los
+                inmunosupresores analizados, incluyendo las medidas
+                correspondientes de potencia y eficacia.
+
+            </MudText>
+
+        </div>
+
+
+        @* ======================================================
+           IMS PRESCRITOS
+           ====================================================== *@
+
+        <div class="report-section">
+
+            <MudText Typo="Typo.h6" Class="report-section-title">
+                INMUNOSUPRESORES PRESCRITOS ACTUALMENTE
+            </MudText>
+
+            <div class="ims-prescribed">
+
+                @foreach (var ims in _results)
+                {
+                    <div class="prescribed-item">
+
+                        <div class="prescribed-name">
+                            @ims.DisplayName
+                        </div>
+
+                        <div class="prescribed-value">
+                            @(ims.Prescribed ? "Sí" : "No")
+                        </div>
+
+                        <div class="prescribed-dose">
+                            @if (ims.Prescribed && !string.IsNullOrWhiteSpace(ims.Dose))
+                            {
+                                <span>@ims.Dose</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+
+        @* ======================================================
+           RESULTADOS
+           ====================================================== *@
+
+        <div class="report-section">
+
+            <div class="results-title">
+
+                <div>
+                    <MudText Typo="Typo.h5" Class="report-section-title">
+                        RESULTADOS DEL IMMUNOBIOGRAM PLUS®
+                    </MudText>
+
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Resultados de potencia y eficacia obtenidos
+                        para cada IMS analizado.
+                    </MudText>
+                </div>
+
+                <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined">
+                    DATOS DEMO
+                </MudChip>
+
+            </div>
+
+
+            <MudGrid Class="mt-4">
+
+                @foreach (var result in _results)
+                {
+                    <MudItem xs="12" md="6">
+
+                        <MudPaper Class="result-card" Elevation="0">
+
+                            <div class="result-card-header">
+
+                                <MudIcon Icon="@Icons.Material.Filled.Science" Color="Color.Primary" />
+
+                                <div>
+                                    <MudText Typo="Typo.h6">
+                                        @result.DisplayName
+                                    </MudText>
+
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @result.Code
+                                    </MudText>
+                                </div>
+
+                            </div>
+
+
+                            <div class="result-values">
+
+                                <div class="result-value potency">
+
+                                    <MudIcon Icon="@Icons.Material.Filled.Bolt" Size="Size.Medium" />
+
+                                    <span class="result-label">
+                                        POTENCIA
+                                    </span>
+
+                                    <span class="result-number">
+                                        @result.Potency
+                                    </span>
+
+                                    <span class="result-unit">
+                                        @result.PotencyUnit
+                                    </span>
+
+                                </div>
+
+
+                                <div class="result-value efficacy">
+
+                                    <MudIcon Icon="@Icons.Material.Filled.Speed" Size="Size.Medium" />
+
+                                    <span class="result-label">
+                                        EFICACIA
+                                    </span>
+
+                                    <span class="result-number">
+                                        @result.Efficacy
+                                    </span>
+
+                                    <span class="result-unit">
+                                        @result.EfficacyUnit
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </MudPaper>
+
+                    </MudItem>
+                }
+
+            </MudGrid>
+
+        </div>
+
+
+
+        @* ======================================================
+            RATIO DE ACTIVACIÓN
+            ====================================================== *@
+
+        <div class="report-section">
+
+            <MudText Typo="Typo.h6" Class="report-section-title">
+                RATIO DE ACTIVACIÓN
+            </MudText>
+
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Resultado del ratio de activación y rango de referencia.
+            </MudText>
+
+            <MudTable Items="_resultsratio" Dense="true" Hover="false" Elevation="0" Bordered="true"
+                      Class="ratio-table">
+
+                <HeaderContent>
+
+                    <MudTh>Prueba</MudTh>
+                    <MudTh>Resultado</MudTh>
+                    <MudTh>Unidades</MudTh>
+                    <MudTh>Rango de referencia</MudTh>
+
+                </HeaderContent>
+
+                <RowTemplate>
+
+                    <MudTd DataLabel="Prueba">
+                        <strong>@context.Prueba</strong>
+                    </MudTd>
+
+                    <MudTd DataLabel="Resultado">
+                        <strong class="ratio-result">
+                            @context.Ratio
+                        </strong>
+                    </MudTd>
+
+                    <MudTd DataLabel="Unidades">
+                        @context.Unidades
+                    </MudTd>
+
+                    <MudTd DataLabel="Rango de referencia">
+                        
+                        @context.RangodeReferencia
+                    </MudTd>
+
+                </RowTemplate>
+
+            </MudTable>
+
+        </div>
+
+
+
+        @* ======================================================
+           RESUMEN
+           ====================================================== *@
+
+        <div class="report-section">
+
+            <MudText Typo="Typo.h6" Class="report-section-title">
+                RESUMEN DE RESULTADOS
+            </MudText>
+
+
+            <MudTable Items="_results" Dense="true" Hover="false" Elevation="0" Bordered="true">
+
+                <HeaderContent>
+
+                    <MudTh>Inmunosupresor</MudTh>
+                    <MudTh>Código</MudTh>
+                    <MudTh>Potencia</MudTh>
+                    <MudTh>Eficacia</MudTh>
+
+                </HeaderContent>
+
+                <RowTemplate>
+
+                    <MudTd>
+                        <strong>@context.DisplayName</strong>
+                    </MudTd>
+
+                    <MudTd>
+                        @context.Code
+                    </MudTd>
+
+                    <MudTd>
+                        @context.Potency @context.PotencyUnit
+                    </MudTd>
+
+                    <MudTd>
+                        @context.Efficacy @context.EfficacyUnit
+                    </MudTd>
+
+                </RowTemplate>
+
+            </MudTable>
+
+        </div>
+
+
+        @* ======================================================
+           OBSERVACIONES
+           ====================================================== *@
+
+        <div class="report-section">
+
+            <MudText Typo="Typo.h6" Class="report-section-title">
+                OBSERVACIONES
+            </MudText>
+
+            <div class="observations">
+
+                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" />
+
+                <MudText Typo="Typo.body2">
+
+                    Mockup visual. Los valores mostrados en esta pantalla
+                    son datos de demostración y no corresponden a
+                    resultados clínicos.
+
+                </MudText>
+
+            </div>
+
+        </div>
+
+
+        @* ======================================================
+           PIE
+           ====================================================== *@
+
+        <div class="report-footer">
+
+            <span>
+                Immunobiogram Plus®
+            </span>
+
+            <span>
+                Informe DEMO-0001
+            </span>
+
+            <span>
+                Biohope
+            </span>
+
+        </div>
+
+    </MudPaper>
+
+</MudContainer>
+
+
+@code {
+
+    private readonly List<ImsResultDemo> _results =
+ [
+     new()
+    {
+        Code = "MPA",
+        DisplayName = "Micofenolato",
+        Potency = "--",
+        PotencyUnit = "",
+        Efficacy = "--",
+        EfficacyUnit = "",
+        Prescribed = true,
+        Dose = "1000 mg"
+    },
+
+    new()
+    {
+        Code = "TAC",
+        DisplayName = "Tacrolimus",
+        Potency = "--",
+        PotencyUnit = "",
+        Efficacy = "--",
+        EfficacyUnit = "",
+        Prescribed = true,
+        Dose = "2 mg"
+    },
+
+@* new()
+    {
+        Code = "SIR",
+        DisplayName = "Sirolimus",
+        Potency = "--",
+        PotencyUnit = "",
+        Efficacy = "--",
+        EfficacyUnit = "",
+        Prescribed = false,
+        Dose = ""
+    }, *@
+
+    new()
+    {
+        Code = "EVE",
+        DisplayName = "Everolimus",
+        Potency = "--",
+        PotencyUnit = "",
+        Efficacy = "--",
+        EfficacyUnit = "",
+        Prescribed = false,
+        Dose = ""
+    },
+
+    new()
+    {
+        Code = "COR",
+        DisplayName = "Corticoides",
+        Potency = "--",
+        PotencyUnit = "",
+        Efficacy = "--",
+        EfficacyUnit = "",
+        Prescribed = true,
+        Dose = "5 mg"
+    }
+ ];
+
+    private readonly List<ActivationRatioDemo> _resultsratio =
+  [
+      new()
+    {
+        Prueba = "Ratio de activación",
+        Ratio = "19",
+        Unidades = "Unidades relativas",
+        RangodeReferencia = ">5,2"
+    }
+     ];
+
+    private sealed class ImsResultDemo
+    {
+        public string Code { get; set; } = "";
+
+        public string DisplayName { get; set; } = "";
+
+        public string Potency { get; set; } = "";
+
+        public string PotencyUnit { get; set; } = "";
+
+        public string Efficacy { get; set; } = "";
+
+        public string EfficacyUnit { get; set; } = "";
+
+        public bool Prescribed { get; set; }
+
+        public string Dose { get; set; } = "";
+
+    }
+
+
+    private sealed class ActivationRatioDemo
+    {
+        public string Prueba { get; set; } = "";
+
+        public string Ratio { get; set; } = "";
+
+        public string Unidades { get; set; } = "";
+
+        public string RangodeReferencia { get; set; } = "";
+    }
+
+@* Agregado para la impresion *@
+    private async Task PrintReport()
+    {
+        await JS.InvokeVoidAsync(
+            "reportFunctions.print");
+    }
+
+    private async Task GeneratePdf()
+    {
+        await JS.InvokeVoidAsync(
+            "reportFunctions.print");
+    }
+@* Agregado para la impresion *@
+
+
+}
+
+
+
+
+<style>
+    .report {
+        background: white;
+        color: #222;
+        border-radius: 4px;
+    }
+
+
+    /* ==========================================================
+       CABECERA
+       ========================================================== */
+
+    .report-header {
+        border: 2px solid #444;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .report-title {
+        color: #df4046;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    .header-information {
+        margin-top: 6px;
+        line-height: 1.6;
+        font-size: .9rem;
+    }
+
+    .date-row {
+        display: flex;
+        gap: 80px;
+    }
+
+    .logo {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding: 4px 8px;
+    }
+
+    .biohope-logo {
+        width: 145px;
+        height: auto;
+        object-fit: contain;
+    }
+
+
+    /* ==========================================================
+       INFORMACIÓN
+       ========================================================== */
+
+    .information-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 8px;
+        gap: 4px;
+    }
+
+    .section-header {
+        background: #df4046;
+        color: white;
+        text-align: center;
+        padding: 5px;
+        font-weight: 600;
+        font-size: .8rem;
+    }
+
+    .information-section:nth-child(2) .section-header {
+        background: #d71920;
+    }
+
+    .section-body {
+        padding: 8px;
+        font-size: .78rem;
+        line-height: 1.8;
+    }
+
+
+    /* ==========================================================
+       SECCIONES DEL INFORME
+       ========================================================== */
+
+    .report-section {
+        margin-top: 32px;
+    }
+
+    .report-section-title {
+        font-weight: 700;
+    }
+
+    .report-paragraph {
+        margin-top: 8px;
+        line-height: 1.7;
+    }
+
+
+    /* ==========================================================
+       PRESCRIPCIÓN
+       ========================================================== */
+
+    .ims-prescribed {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid #777;
+        margin-top: 12px;
+    }
+
+    .prescribed-item {
+        text-align: center;
+        border-right: 1px solid #777;
+    }
+
+    .prescribed-item:last-child {
+        border-right: none;
+    }
+
+    .prescribed-name {
+        background: #f6dddd;
+        padding: 5px;
+        border-bottom: 1px solid #777;
+    }
+
+    .prescribed-value {
+        padding: 5px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .prescribed-dose {
+        padding: 6px 5px;
+        font-weight: 600;
+        color: #444;
+        background-color: #fafafa;
+    }
+
+
+    /* ==========================================================
+       RESULTADOS
+       ========================================================== */
+
+    .results-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .result-card {
+        height: 100%;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .result-card-header {
+        padding: 16px;
+        background: #fafafa;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .result-values {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .result-value {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .result-value:first-child {
+        border-right: 1px solid #eee;
+    }
+
+    .result-label {
+        font-size: .74rem;
+        font-weight: 700;
+        color: #666;
+        letter-spacing: 1px;
+    }
+
+    .result-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .result-unit {
+        color: #777;
+        font-size: .8rem;
+    }
+
+    .potency {
+        color: #d84343;
+    }
+
+    .efficacy {
+        color: #2e7d6f;
+    }
+
+
+
+    /* ==========================================================
+       RATIO
+       ========================================================== */
+
+    .ratio-table {
+        margin-top: 12px;
+        border: 1px solid #777;
+        
+        
+    }
+
+    .ratio-table {
+        margin-top: 12px;
+    }
+
+    .ratio-table th {
+        background-color: #f6dddd;
+        color: #333;
+        border-right: 1px solid #777;
+        font-weight: 700;
+    }
+
+    .ratio-table th:last-child {
+        border-right: none;
+    }
+
+    .ratio-result {
+        color: #d84343;
+        font-size: 1.1rem;
+    }
+
+
+    /* ==========================================================
+       OBSERVACIONES
+       ========================================================== */
+
+    .observations {
+        background: #f5f9fc;
+        border-left: 4px solid #2196f3;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+
+    /* ==========================================================
+       PIE
+       ========================================================== */
+
+    .report-footer {
+        margin-top: 40px;
+        border-top: 1px solid #ccc;
+        padding-top: 12px;
+        color: #777;
+        font-size: .7rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+
+    @@media (max-width: 800px) {
+
+        .information-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ims-prescribed {
+            grid-template-columns: 1fr;
+        }
+
+        .prescribed-item {
+            border-right: none;
+            border-bottom: 1px solid #777;
+        }
+
+        .date-row {
+            display: block;
+        }
+
+        .report-header {
+            flex-direction: column;
+        }
+    }
+
+    /* ==========================================================
+       PARA IMPRESION DEL INFORME
+       ========================================================== */
+
+    @@page {
+        size: A4;
+        margin: 10mm;
+    }
+
+
+    @@media print {
+
+        /* Ocultamos todo */
+        body * {
+            visibility: hidden;
+        }
+
+        /* Mostramos el informe */
+        .report,
+        .report * {
+            visibility: visible;
+        }
+
+        /* Colocamos el informe ocupando la página */
+        .report {
+            position: absolute;
+            left: 0;
+            top: 0;
+
+            width: 100%;
+
+            margin: 0 !important;
+            padding: 15mm !important;
+
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+
+        /* No imprimir los botones */
+        .report-toolbar {
+            display: none !important;
+        }
+
+    }
+</style>

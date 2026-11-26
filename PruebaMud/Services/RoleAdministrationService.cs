@@ -41,8 +41,9 @@ public class RoleAdministrationService
 
         var claims = await _roleManager.GetClaimsAsync(role);
 
+
         var assignedPermissions = claims
-            .Where(c => c.Type == "permission")
+            .Where(c => c.Type == PermissionClaimTypes.Permission)
             .Select(c => c.Value)
             .ToHashSet();
 
@@ -80,7 +81,7 @@ public class RoleAdministrationService
             await _roleManager.GetClaimsAsync(role);
 
         var permissionClaims = currentClaims
-            .Where(c => c.Type == "permission")
+            .Where(c => c.Type == PermissionClaimTypes.Permission)
             .ToList();
 
 
@@ -106,7 +107,7 @@ public class RoleAdministrationService
                 await _roleManager.AddClaimAsync(
                     role,
                     new Claim(
-                        "permission",
+                        PermissionClaimTypes.Permission,
                         permission));
 
             if (!result.Succeeded)

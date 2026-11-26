@@ -15,6 +15,7 @@ public class N8nService
         _url = config["N8n:WebhookUrl"];
 
         // Clave opcional: en n8n se valida con una credencial "Header Auth" (nombre X-Api-Key)
+        // Crea el codigo en modo produccion en n8n y ponlo en appsettings.json. En modo test no hace falta.
         var apiKey = config["N8n:ApiKey"];
         if (!string.IsNullOrWhiteSpace(apiKey))
             _http.DefaultRequestHeaders.TryAddWithoutValidation("X-Api-Key", apiKey);

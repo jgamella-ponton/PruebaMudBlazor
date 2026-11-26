@@ -6,6 +6,9 @@ using PruebaMud.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using PruebaMud.Components.Account;
+using Microsoft.AspNetCore.Authorization;
+using PruebaMud.Authorization;
+using System.Security.Claims;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +42,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         .AddDefaultTokenProviders();
 builder.Services.AddScoped<UserAdministrationService>();
 builder.Services.AddScoped<RoleAdministrationService>();
+
+
+//Agregado para las politicas de permisos
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider,PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler,PermissionAuthorizationHandler>();
+//Agregado para las politicas de permisos
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 

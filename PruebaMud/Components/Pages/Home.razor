@@ -1,7 +1,646 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 
-<h1>Hello, world!</h1>
+@attribute [Authorize]
 
-Welcome to your new app.
+@inject NavigationManager Navigation
+
+<PageTitle>Inicio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="home-container">
+
+    @* ============================================================
+       CABECERA PRINCIPAL
+       ============================================================ *@
+
+    <MudPaper Class="hero-section pa-8 mb-6"
+              Elevation="0">
+
+        <MudGrid AlignItems="AlignItems.Center">
+
+            <MudItem xs="12" md="7">
+
+                <MudStack Spacing="3">
+
+                    <MudChip T="string"
+                             Color="Color.Primary"
+                             Variant="Variant.Outlined"
+                             Size="Size.Small"
+                             Icon="@Icons.Material.Filled.Science">
+                        Plataforma de cálculo IMS
+                    </MudChip>
+
+                    <MudText Typo="Typo.h2"
+                             Class="hero-title">
+                        IMBG + Cálculo de potencia y eficacia
+                    </MudText>
+
+                    <MudText Typo="Typo.h5"
+                             Color="Color.Secondary">
+                        Procesamiento de curvas y obtención de resultados
+                        para cada IMS
+                    </MudText>
+
+                    <MudText Typo="Typo.body1"
+                             Class="hero-description">
+                        Accede a la calculadora para introducir o cargar
+                        las variables calculadas de todas las curvas,
+                        enviarlas al proceso de análisis y obtener los
+                        resultados de potencia y eficacia asociados
+                        a cada inmunosupresor.
+                    </MudText>
+
+                    <MudStack Row="true"
+                              Spacing="2"
+                              Class="mt-4">
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.Calculate"
+                                   OnClick="OpenCalculator">
+                            Abrir calculadora
+                        </MudButton>
+
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Large"
+                                   StartIcon="@Icons.Material.Filled.Assessment"
+                                   OnClick="OpenResults">
+                            Consultar resultados
+                        </MudButton>
+
+                    </MudStack>
+
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+
+                <MudPaper Class="calculation-summary pa-6"
+                          Elevation="4">
+
+                    <MudStack AlignItems="AlignItems.Center"
+                              Spacing="3">
+
+                        <MudAvatar Color="Color.Primary"
+                                   Size="Size.Large"
+                                   Variant="Variant.Filled">
+
+                            <MudIcon Icon="@Icons.Material.Filled.QueryStats"
+                                     Size="Size.Large" />
+
+                        </MudAvatar>
+
+                        <MudText Typo="Typo.h5"
+                                 Align="Align.Center">
+                            Flujo de cálculo
+                        </MudText>
+
+                        <MudText Typo="Typo.body2"
+                                 Align="Align.Center"
+                                 Color="Color.Secondary">
+                            Las variables de las curvas se procesan y
+                            se envían al motor de cálculo para obtener
+                            los resultados individuales de cada IMS.
+                        </MudText>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudStack Row="true"
+                                  Justify="Justify.SpaceAround"
+                                  Style="width:100%;">
+
+                            <MudStack AlignItems="AlignItems.Center"
+                                      Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.ShowChart"
+                                         Color="Color.Info" />
+
+                                <MudText Typo="Typo.caption">
+                                    Curvas
+                                </MudText>
+                            </MudStack>
+
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
+                                     Color="Color.Default" />
+
+                            <MudStack AlignItems="AlignItems.Center"
+                                      Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Calculate"
+                                         Color="Color.Warning" />
+
+                                <MudText Typo="Typo.caption">
+                                    Cálculo
+                                </MudText>
+                            </MudStack>
+
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
+                                     Color="Color.Default" />
+
+                            <MudStack AlignItems="AlignItems.Center"
+                                      Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Analytics"
+                                         Color="Color.Success" />
+
+                                <MudText Typo="Typo.caption">
+                                    Resultados
+                                </MudText>
+                            </MudStack>
+
+                        </MudStack>
+
+                    </MudStack>
+
+                </MudPaper>
+
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+
+    @* ============================================================
+       ACCESOS PRINCIPALES
+       ============================================================ *@
+
+    <MudText Typo="Typo.h4" Class="mb-1">
+        Accesos principales
+    </MudText>
+
+    <MudText Typo="Typo.body2"
+             Color="Color.Secondary"
+             Class="mb-4">
+        Selecciona el módulo que deseas utilizar.
+    </MudText>
+
+    <MudGrid Class="mb-8">
+
+        @* CALCULADORA *@
+
+        <MudItem xs="12" sm="6" lg="4">
+
+            <MudCard Class="module-card"
+                     Elevation="2">
+
+                <MudCardContent>
+
+                    <MudStack Spacing="3">
+
+                        <MudAvatar Color="Color.Primary"
+                                   Variant="Variant.Filled"
+                                   Size="Size.Large">
+
+                            <MudIcon Icon="@Icons.Material.Filled.Calculate"
+                                     Size="Size.Large" />
+
+                        </MudAvatar>
+
+                        <MudText Typo="Typo.h5">
+                            Calculadora IMS
+                        </MudText>
+
+                        <MudText Typo="Typo.body2"
+                                 Color="Color.Secondary">
+                            Introduce las variables obtenidas de las curvas
+                            y envía los datos al proceso de cálculo.
+                        </MudText>
+
+                        <MudList T="string"
+                                 Dense="true"
+                                 Class="pa-0">
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.CheckCircle">
+                                Validación de variables
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.CheckCircle">
+                                Procesamiento de todas las curvas
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.CheckCircle">
+                                Envío al motor de cálculo
+                            </MudListItem>
+
+                        </MudList>
+
+                    </MudStack>
+
+                </MudCardContent>
+
+                <MudCardActions Class="pa-4 pt-0">
+
+                    <MudButton FullWidth="true"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               EndIcon="@Icons.Material.Filled.ArrowForward"
+                               OnClick="OpenCalculator">
+                        Abrir calculadora
+                    </MudButton>
+
+                </MudCardActions>
+
+            </MudCard>
+
+        </MudItem>
+
+
+        @* RESULTADOS *@
+
+        <MudItem xs="12" sm="6" lg="4">
+
+            <MudCard Class="module-card"
+                     Elevation="2">
+
+                <MudCardContent>
+
+                    <MudStack Spacing="3">
+
+                        <MudAvatar Color="Color.Success"
+                                   Variant="Variant.Filled"
+                                   Size="Size.Large">
+
+                            <MudIcon Icon="@Icons.Material.Filled.Assessment"
+                                     Size="Size.Large" />
+
+                        </MudAvatar>
+
+                        <MudText Typo="Typo.h5">
+                            Resultados
+                        </MudText>
+
+                        <MudText Typo="Typo.body2"
+                                 Color="Color.Secondary">
+                            Consulta los resultados generados para cada
+                            IMS después de procesar las curvas.
+                        </MudText>
+
+                        <MudList T="string"
+                                 Dense="true"
+                                 Class="pa-0">
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.Bolt">
+                                Potencia calculada
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.Speed">
+                                Eficacia calculada
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.Description">
+                                Respuesta completa del análisis
+                            </MudListItem>
+
+                        </MudList>
+
+                    </MudStack>
+
+                </MudCardContent>
+
+                <MudCardActions Class="pa-4 pt-0">
+
+                    <MudButton FullWidth="true"
+                               Variant="Variant.Outlined"
+                               Color="Color.Success"
+                               EndIcon="@Icons.Material.Filled.ArrowForward"
+                               OnClick="OpenResults">
+                        Consultar resultados
+                    </MudButton>
+
+                </MudCardActions>
+
+            </MudCard>
+
+        </MudItem>
+
+
+        @* SOLICITUDES *@
+
+        <MudItem xs="12" sm="6" lg="4">
+
+            <MudCard Class="module-card"
+                     Elevation="2">
+
+                <MudCardContent>
+
+                    <MudStack Spacing="3">
+
+                        <MudAvatar Color="Color.Info"
+                                   Variant="Variant.Filled"
+                                   Size="Size.Large">
+
+                            <MudIcon Icon="@Icons.Material.Filled.Assignment"
+                                     Size="Size.Large" />
+
+                        </MudAvatar>
+
+                        <MudText Typo="Typo.h5">
+                            Solicitudes
+                        </MudText>
+
+                        <MudText Typo="Typo.body2"
+                                 Color="Color.Secondary">
+                            Consulta y administra las solicitudes
+                            relacionadas con los cálculos realizados.
+                        </MudText>
+
+                        <MudList T="string"
+                                 Dense="true"
+                                 Class="pa-0">
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.Search">
+                                Consulta de solicitudes
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.Person">
+                                Asociación con clientes
+                            </MudListItem>
+
+                            <MudListItem T="string"
+                                         Icon="@Icons.Material.Filled.History">
+                                Seguimiento del procesamiento
+                            </MudListItem>
+
+                        </MudList>
+
+                    </MudStack>
+
+                </MudCardContent>
+
+                <MudCardActions Class="pa-4 pt-0">
+
+                    <MudButton FullWidth="true"
+                               Variant="Variant.Outlined"
+                               Color="Color.Info"
+                               EndIcon="@Icons.Material.Filled.ArrowForward"
+                               OnClick="OpenRequests">
+                        Ver solicitudes
+                    </MudButton>
+
+                </MudCardActions>
+
+            </MudCard>
+
+        </MudItem>
+
+    </MudGrid>
+
+
+    @* ============================================================
+       EXPLICACIÓN DEL PROCESO
+       ============================================================ *@
+
+    <MudPaper Class="pa-6 mb-6"
+              Elevation="1">
+
+        <MudText Typo="Typo.h4" Class="mb-2">
+            Proceso de análisis
+        </MudText>
+
+        <MudText Typo="Typo.body2"
+                 Color="Color.Secondary"
+                 Class="mb-6">
+            El cálculo se realiza siguiendo un flujo controlado
+            desde la preparación de los datos hasta la presentación
+            de los resultados.
+        </MudText>
+
+        <MudGrid>
+
+            <MudItem xs="12" sm="6" lg="3">
+
+                <MudStack AlignItems="AlignItems.Center"
+                          Spacing="2"
+                          Class="process-step">
+
+                    <MudAvatar Color="Color.Primary"
+                               Variant="Variant.Outlined"
+                               Size="Size.Large">
+                        1
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.h6"
+                             Align="Align.Center">
+                        Preparar variables
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Align="Align.Center"
+                             Color="Color.Secondary">
+                        Introducción o carga de las variables
+                        calculadas para las curvas.
+                    </MudText>
+
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem xs="12" sm="6" lg="3">
+
+                <MudStack AlignItems="AlignItems.Center"
+                          Spacing="2"
+                          Class="process-step">
+
+                    <MudAvatar Color="Color.Info"
+                               Variant="Variant.Outlined"
+                               Size="Size.Large">
+                        2
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.h6"
+                             Align="Align.Center">
+                        Validar datos
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Align="Align.Center"
+                             Color="Color.Secondary">
+                        Comprobación de los campos obligatorios
+                        antes de comenzar el procesamiento.
+                    </MudText>
+
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem xs="12" sm="6" lg="3">
+
+                <MudStack AlignItems="AlignItems.Center"
+                          Spacing="2"
+                          Class="process-step">
+
+                    <MudAvatar Color="Color.Warning"
+                               Variant="Variant.Outlined"
+                               Size="Size.Large">
+                        3
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.h6"
+                             Align="Align.Center">
+                        Procesar curvas
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Align="Align.Center"
+                             Color="Color.Secondary">
+                        Envío de los datos para realizar el cálculo
+                        correspondiente a todos los IMS.
+                    </MudText>
+
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem xs="12" sm="6" lg="3">
+
+                <MudStack AlignItems="AlignItems.Center"
+                          Spacing="2"
+                          Class="process-step">
+
+                    <MudAvatar Color="Color.Success"
+                               Variant="Variant.Outlined"
+                               Size="Size.Large">
+                        4
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.h6"
+                             Align="Align.Center">
+                        Obtener resultados
+                    </MudText>
+
+                    <MudText Typo="Typo.body2"
+                             Align="Align.Center"
+                             Color="Color.Secondary">
+                        Presentación de los valores de potencia y
+                        eficacia obtenidos para cada IMS.
+                    </MudText>
+
+                </MudStack>
+
+            </MudItem>
+
+        </MudGrid>
+
+    </MudPaper>
+
+
+    @* ============================================================
+       INFORMACIÓN DEL USUARIO
+       ============================================================ *@
+
+    <AuthorizeView>
+        <Authorized Context="authContext">
+
+            <MudAlert Severity="Severity.Info"
+                      Variant="Variant.Outlined"
+                      Icon="@Icons.Material.Filled.AccountCircle">
+
+                Sesión iniciada como
+                <strong>@GetUserDisplayName(authContext.User)</strong>.
+
+                Utiliza los accesos anteriores para empezar a trabajar.
+
+            </MudAlert>
+
+        </Authorized>
+    </AuthorizeView>
+
+</MudContainer>
+
+
+@code
+{
+    private void OpenCalculator()
+    {
+        Navigation.NavigateTo("/calc");
+    }
+
+    private void OpenResults()
+    {
+        Navigation.NavigateTo("/resultados");
+    }
+
+    private void OpenRequests()
+    {
+        Navigation.NavigateTo("/requests");
+    }
+
+    private static string GetUserDisplayName(
+        System.Security.Claims.ClaimsPrincipal user)
+    {
+        return user.Identity?.Name
+               ?? user.FindFirst(
+                   System.Security.Claims.ClaimTypes.Email)?.Value
+               ?? "usuario";
+    }
+}
+
+
+<style>
+    .home-container {
+        padding-top: 32px;
+        padding-bottom: 48px;
+    }
+
+    .hero-section {
+        border-radius: 20px;
+        background:
+            linear-gradient(
+                135deg,
+                rgba(25, 118, 210, 0.12),
+                rgba(38, 166, 154, 0.08)
+            );
+        border: 1px solid rgba(25, 118, 210, 0.14);
+    }
+
+    .hero-title {
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .hero-description {
+        max-width: 760px;
+        line-height: 1.7;
+    }
+
+    .calculation-summary {
+        border-radius: 18px;
+        background-color: var(--mud-palette-surface);
+    }
+
+    .module-card {
+        height: 100%;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .module-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .module-card .mud-card-content {
+        flex-grow: 1;
+    }
+
+    .process-step {
+        padding: 16px;
+        height: 100%;
+    }
+</style>

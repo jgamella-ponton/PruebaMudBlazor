@@ -243,6 +243,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQZWRpZG9zMi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/ReportPreview.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZXBvcnRQcmV2aWV3LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/FranciscoJavierGamel/VSCODEPROJECTS/PruebaMud/Components/Pages/RequestDetails.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZXF1ZXN0RGV0YWlscy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

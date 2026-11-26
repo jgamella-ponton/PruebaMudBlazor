@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "hV6JbyQL2CPDK1/+aaS3J7r6GlDmUCrcoLct4puJ16Q=",
+  "Hash": "Jrm1JSqcFbBvvNNiaENBt6FuaNmNsJ0bPXGmpKGfSq0=",
   "Source": "PruebaMud",
   "BasePath": "_content/PruebaMud",
   "Mode": "Default",
@@ -225,6 +225,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Identity": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\3mxq7vzjf3-871ymhcdjy.gz",
+      "SourceId": "PruebaMud",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\",
+      "BasePath": "_content/PruebaMud",
+      "RelativePath": "js/report#[.{fingerprint=871ymhcdjy}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "awstr0ewzx",
+      "Integrity": "du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js"
     },
     {
       "Identity": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\40fkekg86a-fsbi9cje9m.gz",
@@ -1212,6 +1233,48 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\favicon.png"
+    },
+    {
+      "Identity": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\images\\branding\\biohope_logo.png",
+      "SourceId": "PruebaMud",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\",
+      "BasePath": "_content/PruebaMud",
+      "RelativePath": "images/branding/biohope_logo#[.{fingerprint}]?.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "l95k939gy5",
+      "Integrity": "V4NpVtOEeF/VA8xkQi1ESpNuxffzmZEMiQolah1s6Z0=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\branding\\biohope_logo.png"
+    },
+    {
+      "Identity": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js",
+      "SourceId": "PruebaMud",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\",
+      "BasePath": "_content/PruebaMud",
+      "RelativePath": "js/report#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "871ymhcdjy",
+      "Integrity": "lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\report.js"
     },
     {
       "Identity": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
@@ -3038,6 +3101,386 @@
         {
           "Name": "integrity",
           "Value": "sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg="
+        }
+      ]
+    },
+    {
+      "Route": "images/branding/biohope_logo.l95k939gy5.png",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\images\\branding\\biohope_logo.png",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "12432"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/png"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"V4NpVtOEeF/VA8xkQi1ESpNuxffzmZEMiQolah1s6Z0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 25 Nov 2026 15:07:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "l95k939gy5"
+        },
+        {
+          "Name": "label",
+          "Value": "images/branding/biohope_logo.png"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-V4NpVtOEeF/VA8xkQi1ESpNuxffzmZEMiQolah1s6Z0="
+        }
+      ]
+    },
+    {
+      "Route": "images/branding/biohope_logo.png",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\images\\branding\\biohope_logo.png",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "12432"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/png"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"V4NpVtOEeF/VA8xkQi1ESpNuxffzmZEMiQolah1s6Z0=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Wed, 25 Nov 2026 15:07:10 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=3600, must-revalidate"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-V4NpVtOEeF/VA8xkQi1ESpNuxffzmZEMiQolah1s6Z0="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.871ymhcdjy.js",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\3mxq7vzjf3-871ymhcdjy.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.011904761905"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "83"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "871ymhcdjy"
+        },
+        {
+          "Name": "label",
+          "Value": "js/report.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.871ymhcdjy.js",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "88"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "871ymhcdjy"
+        },
+        {
+          "Name": "label",
+          "Value": "js/report.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.871ymhcdjy.js.gz",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\3mxq7vzjf3-871ymhcdjy.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "83"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "871ymhcdjy"
+        },
+        {
+          "Name": "label",
+          "Value": "js/report.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.js",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\3mxq7vzjf3-871ymhcdjy.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.011904761905"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "83"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.js",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\wwwroot\\js\\report.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "88"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-lPQZg9niiEY4bUZ8RjUrdPrN7g69n9i+zo2EIMSODGI="
+        }
+      ]
+    },
+    {
+      "Route": "js/report.js.gz",
+      "AssetFile": "C:\\Users\\FranciscoJavierGamel\\VSCODEPROJECTS\\PruebaMud\\obj\\Debug\\net9.0\\compressed\\3mxq7vzjf3-871ymhcdjy.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "83"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 26 Nov 2026 08:26:03 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-du2EEXCExT2JwO4fVkOc6FOGjgXMr60KaWqJYvCNzqs="
         }
       ]
     },
